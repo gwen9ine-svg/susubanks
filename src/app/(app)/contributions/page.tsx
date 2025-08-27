@@ -51,10 +51,10 @@ const formatCurrency = (value: number): string => {
 }
 
 const allContributions = [
-    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024" },
-    { desc: "Contribution", member: "Ama Serwaa", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024" },
-    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024" },
-    { desc: "Contribution", member: "Yaw Mensah", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024" },
+    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Completed" },
+    { desc: "Contribution", member: "Ama Serwaa", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Completed" },
+    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024", status: "Completed" },
+    { desc: "Contribution", member: "Yaw Mensah", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024", status: "Processing" },
 ];
 
 export default function ContributionsPage() {
@@ -298,6 +298,7 @@ export default function ContributionsPage() {
                         <TableHead>Type</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -309,6 +310,7 @@ export default function ContributionsPage() {
                         <TableCell><Badge variant="outline" className="border-primary/50 text-primary">{item.type}</Badge></TableCell>
                         <TableCell>{item.amount}</TableCell>
                         <TableCell>{item.date}</TableCell>
+                        <TableCell><Badge variant={item.status === 'Completed' || item.status === 'Settled' ? 'default' : 'secondary'} className={item.status === 'Completed' || item.status === 'Settled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>{item.status}</Badge></TableCell>
                         <TableCell>
                             <div className="flex gap-1">
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
