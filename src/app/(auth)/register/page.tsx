@@ -16,7 +16,6 @@ export default function RegisterPage() {
           <SusuLogo isBank={true} />
         </div>
         <CardTitle className="text-2xl">Create your account</CardTitle>
-        <CardDescription>Step 3 of 3: Personal details</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
