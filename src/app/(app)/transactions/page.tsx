@@ -82,8 +82,8 @@ export default function TransactionsPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="grid gap-6">
+        <div className="space-y-4">
             <Card>
                 <CardHeader>
                     <CardTitle>All Transactions</CardTitle>
@@ -121,51 +121,6 @@ export default function TransactionsPage() {
                             ))}
                         </TableBody>
                     </Table>
-                </CardContent>
-            </Card>
-        </div>
-        <div className="lg:col-span-1 space-y-4">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Transaction Detail</CardTitle>
-                    <CardDescription>CONT-07-2024-A1</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    <div className="flex justify-between"><span>Member:</span> <span className="font-medium">Kofi Adu</span></div>
-                    <div className="flex justify-between"><span>Amount:</span> <span className="font-medium text-green-600">$250.00</span></div>
-                    <div className="flex justify-between"><span>Method:</span> <span className="font-medium">Bank Transfer</span></div>
-                    <div className="flex justify-between"><span>Status:</span> <span className="font-medium">{getStatusBadge("Settled")}</span></div>
-                    <div className="flex justify-between"><span>Category:</span> <span className="font-medium">Contribution</span></div>
-                    <div>
-                        <p>Notes:</p>
-                        <p className="text-muted-foreground">July monthly contribution.</p>
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                        <Button size="sm">Mark Pending</Button>
-                        <Button variant="outline" size="sm"><Copy className="mr-2 h-3 w-3" /> Copy Ref</Button>
-                    </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><History className="h-5 w-5" /> History</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-start gap-4">
-                        <div className="mt-1 flex h-2 w-2 items-center justify-center rounded-full bg-primary" />
-                        <div>
-                            <p className="font-medium">Payment received</p>
-                            <time className="text-xs text-muted-foreground">July 1, 2024, 10:05 AM</time>
-                        </div>
-                    </div>
-                     <div className="flex items-start gap-4">
-                        <div className="mt-1 flex h-2 w-2 items-center justify-center rounded-full bg-primary/50" />
-                        <div>
-                            <p className="font-medium">Status changed to Settled</p>
-                             <p className="text-xs text-muted-foreground">by Admin Ama Serwaa</p>
-                            <time className="text-xs text-muted-foreground">July 1, 2024, 10:00 AM</time>
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
         </div>
