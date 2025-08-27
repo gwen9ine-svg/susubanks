@@ -1,4 +1,8 @@
 
+
+'use client'
+
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -15,7 +19,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getCollection } from "@/services/firestore";
+import { getCollection, seedDatabase } from "@/services/firestore";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 const summaryCards = [
   { title: "Group Balance", value: "GH₵12,500.00", description: "Total funds in the collective" },
@@ -42,8 +48,29 @@ const getStatusColor = (status: string) => {
 };
 
 
-export default async function DashboardPage() {
-  const members = await getCollection('members');
+export default function DashboardPage() {
+  const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    async function fetchMembers() {
+      setLoading(true);
+      const memberData = await getCollection('members');
+      setMembers(memberData);
+      setLoading(false);
+    }
+    fetchMembers();
+  }, []);
+
+  const handleSeed = async () => {
+    setLoading(true);
+    await seedDatabase();
+    const memberData = await getCollection('members');
+    setMembers(memberData);
+    setLoading(false);
+    router.refresh();
+  };
 
   return (
     <div className="space-y-6">
@@ -70,7 +97,7 @@ export default async function DashboardPage() {
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            </CardHeader>
+            </Header>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>
             </CardContent>
@@ -93,7 +120,11 @@ export default async function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.length > 0 ? members.map((member: any) => (
+              {loading ? (
+                 <TableRow>
+                  <TableCell colSpan={3} className="text-center">Loading members...</TableCell>
+                </TableRow>
+              ) : members.length > 0 ? members.map((member: any) => (
                 <TableRow key={member.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -117,7 +148,10 @@ export default async function DashboardPage() {
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">No members found. Please seed the database.</TableCell>
+                  <TableCell colSpan={3} className="text-center space-y-4 py-8">
+                    <p>No members found in the database.</p>
+                    <Button onClick={handleSeed}>Seed Database</Button>
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>

@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 // A placeholder for a more robust data fetching service.
 // In a real app, you'd have more specific functions like `getUsers`, `getTransactions`, etc.
@@ -11,8 +11,10 @@ export async function getCollection(collectionName: string) {
     const querySnapshot = await getDocs(collection(db, collectionName));
     const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return data;
-  } catch (error) {
+  } catch (error)
+ {
     console.error(`Error fetching ${collectionName}:`, error);
+    // Return empty array if collection doesn't exist, which is expected before seeding.
     return [];
   }
 }
@@ -27,10 +29,21 @@ export async function seedDatabase() {
       { id: '5', name: "Kwame Nkrumah", email: "k.nkrumah@example.com", avatar: "https://picsum.photos/100/100?e", role: "Member", contributed: "GH₵1,500", status: "Suspended" },
     ];
 
-    const membersRef = collection(db, 'members');
-    for (const member of members) {
-        // In a real app, you'd use addDoc or setDoc with a specific ID
-        // For simplicity, we are not implementing a full seeding script here.
-        console.log(`Would seed member: ${member.name}`);
+    try {
+        const batch = writeBatch(db);
+        const membersRef = collection(db, 'members');
+        
+        console.log('Seeding members collection...');
+        members.forEach((member) => {
+            const docRef = doc(membersRef, member.id);
+            batch.set(docRef, member);
+        });
+
+        await batch.commit();
+        console.log('Database seeded successfully!');
+        return { success: true };
+    } catch (error) {
+        console.error('Error seeding database:', error);
+        return { success: false, error: "Failed to seed database." };
     }
 }
