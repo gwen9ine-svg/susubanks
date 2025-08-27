@@ -271,7 +271,7 @@ export default function ContributionsPage() {
                         <TableCell>{item.date}</TableCell>
                     </TableRow>
                     ))}
-                </Body>
+                </TableBody>
             </Table>
           </CardContent>
         </Card>
