@@ -35,6 +35,12 @@ export async function seedDatabase() {
         { id: 'tx3', ref: "CONT-07-2024-B2", member: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Settled" },
     ];
 
+    const loans = [
+        { id: 'loan1', memberId: '3', memberName: 'Yaw Mensah', amount: 'GH₵1000.00', date: 'June 15, 2024', status: 'Outstanding' },
+        { id: 'loan2', memberId: '4', memberName: 'Adwoa Boateng', amount: 'GH₵2200.00', date: 'July 1, 2024', status: 'Outstanding' },
+        { id: 'loan3', memberId: '1', memberName: 'Kofi Adu', amount: 'GH₵500.00', date: 'April 5, 2024', status: 'Paid' },
+    ];
+
     try {
         const batch = writeBatch(db);
         
@@ -50,6 +56,13 @@ export async function seedDatabase() {
         transactions.forEach((transaction) => {
             const docRef = doc(transactionsRef, transaction.id);
             batch.set(docRef, transaction);
+        });
+        
+        console.log('Seeding loans collection...');
+        const loansRef = collection(db, 'loans');
+        loans.forEach((loan) => {
+            const docRef = doc(loansRef, loan.id);
+            batch.set(docRef, loan);
         });
 
         await batch.commit();

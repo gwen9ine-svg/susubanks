@@ -39,6 +39,12 @@ type Transaction = {
   email?: string;
 };
 
+type Loan = {
+  id: string;
+  amount: string;
+  status: 'Outstanding' | 'Paid' | string;
+}
+
 const parseAmount = (amount: string): number => {
     return parseFloat(amount.replace(/[^0-9.-]+/g,""));
 }
@@ -77,6 +83,7 @@ export default function DashboardPage() {
       setLoading(true);
       const memberData = await getCollection('members') as Member[];
       const transactionData = await getCollection('transactions') as Transaction[];
+      const loanData = await getCollection('loans') as Loan[];
       
       const totalContributions = transactionData
         .filter(tx => tx.type === 'Contribution')
@@ -92,8 +99,9 @@ export default function DashboardPage() {
 
       const activeMembers = memberData.filter(m => m.status === 'Active').length;
 
-      // NOTE: Loans outstanding is hardcoded for now as loan data is not yet in Firestore.
-      const loansOutstanding = 3200;
+      const loansOutstanding = loanData
+        .filter(loan => loan.status === 'Outstanding')
+        .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
 
       setMembers(memberData);
       setSummary({
@@ -218,4 +226,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
