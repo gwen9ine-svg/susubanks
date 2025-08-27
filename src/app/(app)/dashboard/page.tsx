@@ -212,7 +212,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Group Members</CardTitle>
-          <CardDescription>An overview of all collective members.</CardDescription>
+          <CardDescription>An overview of your group members</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
