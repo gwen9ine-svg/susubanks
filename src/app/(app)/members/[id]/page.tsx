@@ -16,7 +16,7 @@ const recentActivity = [
     { action: "Profile updated", details: "Changed phone number", time: "3 months ago" },
 ];
 
-export default function MemberOverviewPage({ params: { id } }: { params: { id: string }, searchParams: {} }) {
+export default function MemberOverviewPage({ params: { id } }: { params: { id: string } }) {
   return (
     <div className="space-y-6">
       <Card>
