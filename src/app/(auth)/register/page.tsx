@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +52,17 @@ export default function RegisterPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="gov-id-type">Government ID Type</Label>
-            <Input id="gov-id-type" placeholder="Passport, Driver's license, etc." />
+            <Select>
+              <SelectTrigger id="gov-id-type">
+                <SelectValue placeholder="Select ID type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ghana_card">Ghana Card</SelectItem>
+                <SelectItem value="passport">Passport</SelectItem>
+                <SelectItem value="drivers_license">Driver's License</SelectItem>
+                <SelectItem value="voters_id">Voter's ID</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="id-number">ID Number</Label>
