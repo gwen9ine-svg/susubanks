@@ -281,7 +281,7 @@ export default function ContributionsPage() {
         <CardHeader>
             <CardTitle>All Contributions</CardTitle>
             <CardDescription>A log of all contributions from every member.</CardDescription>
-        </Header>
+        </CardHeader>
         <CardContent>
             <Table>
                 <TableHeader>
