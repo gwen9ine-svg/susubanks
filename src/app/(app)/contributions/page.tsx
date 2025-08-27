@@ -186,7 +186,6 @@ export default function ContributionsPage() {
     const getStatusBadge = (status: string) => {
         switch(status.toLowerCase()) {
             case 'completed':
-            case 'settled':
                 return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
             case 'processing':
                 return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
