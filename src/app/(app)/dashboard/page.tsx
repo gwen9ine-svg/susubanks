@@ -23,16 +23,29 @@ import { getCollection, seedDatabase } from "@/services/firestore";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
-const summaryCards = [
-  { title: "Group Balance", value: "GH₵12,500.00", description: "Total funds in the collective" },
-  { title: "My Contributions", value: "GH₵2,500.00", description: "Your total contributions" },
-  { title: "Upcoming Payment", value: "GH₵250.00", description: "Due on July 25, 2024" },
-];
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  contributed: string;
+  status: 'Active' | 'On Leave' | 'Suspended' | string;
+}
 
-const metricCards = [
-    { title: "Active Members", value: "50" },
-    { title: "Loans Outstanding", value: "GH₵3,200.00" },
-]
+type Transaction = {
+  id: string;
+  type: 'Contribution' | 'Withdrawal' | string;
+  amount: string;
+  email?: string;
+};
+
+const parseAmount = (amount: string): number => {
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
+
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
+}
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -49,28 +62,72 @@ const getStatusColor = (status: string) => {
 
 
 export default function DashboardPage() {
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [summary, setSummary] = useState({
+    groupBalance: 0,
+    myContributions: 0,
+    activeMembers: 0,
+    loansOutstanding: 0,
+  });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchMembers() {
+    async function fetchData() {
       setLoading(true);
-      const memberData = await getCollection('members');
+      const memberData = await getCollection('members') as Member[];
+      const transactionData = await getCollection('transactions') as Transaction[];
+      
+      const totalContributions = transactionData
+        .filter(tx => tx.type === 'Contribution')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      const totalWithdrawals = transactionData
+        .filter(tx => tx.type === 'Withdrawal')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+        
+      const myContributions = transactionData
+        .filter(tx => tx.type === 'Contribution' && tx.email === 'k.adu@example.com')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      const activeMembers = memberData.filter(m => m.status === 'Active').length;
+
+      // NOTE: Loans outstanding is hardcoded for now as loan data is not yet in Firestore.
+      const loansOutstanding = 3200;
+
       setMembers(memberData);
+      setSummary({
+        groupBalance: totalContributions - totalWithdrawals,
+        myContributions,
+        activeMembers,
+        loansOutstanding,
+      });
+
       setLoading(false);
     }
-    fetchMembers();
+    fetchData();
   }, []);
 
   const handleSeed = async () => {
     setLoading(true);
     await seedDatabase();
+    // Re-fetch data after seeding
     const memberData = await getCollection('members');
-    setMembers(memberData);
+    setMembers(memberData as Member[]);
     setLoading(false);
     router.refresh();
   };
+
+  const summaryCards = [
+    { title: "Group Balance", value: formatCurrency(summary.groupBalance), description: "Total funds in the collective" },
+    { title: "My Contributions", value: formatCurrency(summary.myContributions), description: "Your total contributions" },
+    { title: "Upcoming Payment", value: "GH₵250.00", description: "Due on July 25, 2024" }, // Static for now
+  ];
+
+  const metricCards = [
+      { title: "Active Members", value: summary.activeMembers.toString() },
+      { title: "Loans Outstanding", value: formatCurrency(summary.loansOutstanding) },
+  ];
 
   return (
     <div className="space-y-6">
@@ -161,3 +218,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
