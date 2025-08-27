@@ -91,3 +91,5 @@ export async function seedDatabase() {
         return { success: false, error: "Failed to seed database." };
     }
 }
+
+export { db, doc, setDoc };

@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { addDocument, getCollection } from '@/services/firestore';
+import { addDocument, getCollection, setDoc, doc, db } from '@/services/firestore';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import { Check, X } from 'lucide-react';
@@ -50,17 +50,12 @@ const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
 }
 
-const allContributions = [
-    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Completed" },
-    { desc: "Contribution", member: "Ama Serwaa", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Completed" },
-    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024", status: "Completed" },
-    { desc: "Contribution", member: "Yaw Mensah", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024", status: "Processing" },
-];
-
 export default function ContributionsPage() {
   const { toast } = useToast();
   const [depositMethod, setDepositMethod] = useState('bank');
   const [contributionHistory, setContributionHistory] = useState<Transaction[]>([]);
+  const [allContributions, setAllContributions] = useState<Transaction[]>([]);
+
   const [summaryData, setSummaryData] = useState({
     totalContributions: 0,
     myContributions: 0,
@@ -78,6 +73,8 @@ export default function ContributionsPage() {
   async function fetchContributionData() {
     const transactionData = await getCollection('transactions') as Transaction[];
     const contributions = transactionData.filter(tx => tx.type === 'Contribution');
+    
+    setAllContributions(contributions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
     const totalContributions = contributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
     
@@ -142,7 +139,7 @@ export default function ContributionsPage() {
             title: "Contribution Submitted",
             description: "Your contribution has been submitted for processing.",
         });
-        await fetchContributionData(); // Re-fetch summary data
+        await fetchContributionData(); // Re-fetch all data
         clearForm();
     } catch(error) {
         console.error("Error submitting contribution:", error);
@@ -153,6 +150,25 @@ export default function ContributionsPage() {
         });
     } finally {
         setIsSubmitting(false);
+    }
+  };
+
+  const handleContributionStatus = async (transactionId: string, newStatus: 'Completed' | 'Rejected') => {
+    const transactionRef = doc(db, 'transactions', transactionId);
+    try {
+        await setDoc(transactionRef, { status: newStatus }, { merge: true });
+        toast({
+            title: `Contribution ${newStatus === 'Completed' ? 'Accepted' : 'Declined'}`,
+            description: `The contribution has been marked as ${newStatus}.`,
+        });
+        await fetchContributionData();
+    } catch (error) {
+        console.error(`Error updating contribution status:`, error);
+        toast({
+            title: "Update Error",
+            description: "Failed to update contribution status. Please try again.",
+            variant: "destructive",
+        });
     }
   };
 
@@ -170,6 +186,8 @@ export default function ContributionsPage() {
                 return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
             case 'processing':
                 return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+            case 'rejected':
+                 return <Badge variant="destructive">{status}</Badge>;
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }
@@ -306,7 +324,6 @@ export default function ContributionsPage() {
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Description</TableHead>
                         <TableHead>Member</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Amount</TableHead>
@@ -316,21 +333,20 @@ export default function ContributionsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {allContributions.map((item, i) => (
-                    <TableRow key={i}>
-                        <TableCell className="font-medium">{item.desc}</TableCell>
+                    {allContributions.map((item) => (
+                    <TableRow key={item.id}>
                         <TableCell>{item.member}</TableCell>
                         <TableCell><Badge variant="outline" className="border-primary/50 text-primary">{item.type}</Badge></TableCell>
                         <TableCell>{item.amount}</TableCell>
                         <TableCell>{item.date}</TableCell>
                         <TableCell>{getStatusBadge(item.status)}</TableCell>
                         <TableCell>
-                           {item.status === 'Completed' ? (
-                                <Button variant="outline" size="sm" disabled>Done</Button>
+                           {item.status === 'Completed' || item.status === 'Settled' || item.status === 'Rejected' ? (
+                                <Button variant="outline" size="sm" disabled>{item.status}</Button>
                            ) : (
                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
-                                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
+                                    <Button onClick={() => handleContributionStatus(item.id, 'Completed')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
+                                    <Button onClick={() => handleContributionStatus(item.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
                                 </div>
                            )}
                         </TableCell>
