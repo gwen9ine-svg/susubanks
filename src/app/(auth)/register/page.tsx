@@ -99,6 +99,16 @@ export default function RegisterPage() {
             <Input id="id-number" placeholder="Enter ID number" />
           </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" placeholder="••••••••" required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input id="confirm-password" type="password" placeholder="••••••••" required />
+            </div>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="source-of-funds">Source of Funds</Label>
           <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." />
