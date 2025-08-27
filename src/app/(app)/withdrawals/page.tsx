@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Download } from "lucide-react";
 
 const summaryCards = [
   { title: "Available Pool", value: "$10,200.00" },
@@ -56,12 +55,6 @@ export default function WithdrawalsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Withdrawals</h1>
-        <div className="flex items-center gap-2 mt-2 sm:mt-0">
-          <Button variant="outline">New Withdrawal</Button>
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -99,8 +92,16 @@ export default function WithdrawalsPage() {
                 <Textarea id="reason" placeholder="Reason for withdrawal (e.g., emergency, project)" />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="reference">Reference / ID</Label>
-                <Input id="reference" placeholder="Optional" />
+                <Label htmlFor="group-name">Group Name</Label>
+                <Select>
+                  <SelectTrigger id="group-name">
+                    <SelectValue placeholder="Select group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="accra">Susu Collective Accra</SelectItem>
+                    <SelectItem value="kumasi">Susu Collective Kumasi</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
           </CardContent>
           <CardFooter className="flex-col items-start gap-4">
