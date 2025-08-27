@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -23,12 +23,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getCollection } from '@/services/firestore';
+import { format } from 'date-fns';
 
-const summaryCards = [
-  { title: "Available Pool", value: "GH₵10,200.00" },
-  { title: "Pending Requests", value: "3" },
-  { title: "My Last Withdrawal", value: "GH₵500 on May 15, 2024" },
-];
+type Transaction = {
+  id: string;
+  ref: string;
+  member: string;
+  avatar: string;
+  type: 'Contribution' | 'Withdrawal' | string;
+  amount: string;
+  date: string;
+  status: string;
+  email?: string;
+};
+
+const parseAmount = (amount: string): number => {
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
+
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
+}
 
 const withdrawalHistory = [
     { desc: "Emergency Withdrawal", type: "Withdrawal", amount: "GH₵500.00", date: "May 15, 2024" },
@@ -37,6 +53,50 @@ const withdrawalHistory = [
 
 export default function WithdrawalsPage() {
   const [withdrawalMethod, setWithdrawalMethod] = useState('bank');
+  const [summaryData, setSummaryData] = useState({
+    availablePool: 0,
+    pendingRequests: 0,
+    myLastWithdrawal: "N/A",
+  });
+
+  useEffect(() => {
+    async function fetchData() {
+      const transactionData = await getCollection('transactions') as Transaction[];
+      
+      const totalContributions = transactionData
+        .filter(tx => tx.type === 'Contribution')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+        
+      const totalWithdrawals = transactionData
+        .filter(tx => tx.type === 'Withdrawal')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      const pendingWithdrawals = transactionData.filter(tx => tx.type === 'Withdrawal' && tx.status === 'Pending');
+
+      const myWithdrawals = transactionData
+        .filter(tx => tx.type === 'Withdrawal' && tx.email === 'k.adu@example.com')
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      let lastWithdrawalString = "N/A";
+      if (myWithdrawals.length > 0) {
+        const lastTx = myWithdrawals[0];
+        lastWithdrawalString = `${lastTx.amount} on ${format(new Date(lastTx.date), 'MMM d, yyyy')}`;
+      }
+
+      setSummaryData({
+        availablePool: totalContributions - totalWithdrawals,
+        pendingRequests: pendingWithdrawals.length,
+        myLastWithdrawal: lastWithdrawalString,
+      });
+    }
+    fetchData();
+  }, []);
+
+  const summaryCards = [
+    { title: "Available Pool", value: formatCurrency(summaryData.availablePool) },
+    { title: "Pending Requests", value: summaryData.pendingRequests.toString() },
+    { title: "My Last Withdrawal", value: summaryData.myLastWithdrawal },
+  ];
 
   return (
     <div className="space-y-6">
