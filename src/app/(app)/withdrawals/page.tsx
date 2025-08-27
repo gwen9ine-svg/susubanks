@@ -50,48 +50,54 @@ const formatCurrency = (value: number): string => {
 export default function WithdrawalsPage() {
   const [withdrawalMethod, setWithdrawalMethod] = useState('bank');
   const [withdrawalHistory, setWithdrawalHistory] = useState<Transaction[]>([]);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [summaryData, setSummaryData] = useState({
     availablePool: 0,
     pendingRequests: 0,
     myLastWithdrawal: "N/A",
   });
 
-  async function fetchData() {
-    const transactionData = await getCollection('transactions') as Transaction[];
-    
-    const totalContributions = transactionData
-      .filter(tx => tx.type === 'Contribution')
-      .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-      
-    const totalWithdrawals = transactionData
-      .filter(tx => tx.type === 'Withdrawal')
-      .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-
-    const pendingWithdrawals = transactionData.filter(tx => tx.type === 'Withdrawal' && tx.status === 'Pending');
-
-    // Hardcoded user, replace with actual logged in user in a real app
-    const myWithdrawals = transactionData
-      .filter(tx => tx.type === 'Withdrawal' && (tx.email === 'user@example.com' || tx.email === 'k.adu@example.com'))
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    setWithdrawalHistory(myWithdrawals);
-
-    let lastWithdrawalString = "N/A";
-    if (myWithdrawals.length > 0) {
-      const lastTx = myWithdrawals[0];
-      lastWithdrawalString = `${lastTx.amount} on ${format(new Date(lastTx.date), 'MMM d, yyyy')}`;
-    }
-
-    setSummaryData({
-      availablePool: totalContributions - totalWithdrawals,
-      pendingRequests: pendingWithdrawals.length,
-      myLastWithdrawal: lastWithdrawalString,
-    });
-  }
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email);
+  }, []);
 
   useEffect(() => {
+    if (!userEmail) return;
+
+    async function fetchData() {
+      const transactionData = await getCollection('transactions') as Transaction[];
+      
+      const totalContributions = transactionData
+        .filter(tx => tx.type === 'Contribution')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+        
+      const totalWithdrawals = transactionData
+        .filter(tx => tx.type === 'Withdrawal')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      const pendingWithdrawals = transactionData.filter(tx => tx.type === 'Withdrawal' && tx.status === 'Pending');
+
+      const myWithdrawals = transactionData
+        .filter(tx => tx.type === 'Withdrawal' && tx.email === userEmail)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setWithdrawalHistory(myWithdrawals);
+
+      let lastWithdrawalString = "N/A";
+      if (myWithdrawals.length > 0) {
+        const lastTx = myWithdrawals[0];
+        lastWithdrawalString = `${lastTx.amount} on ${format(new Date(lastTx.date), 'MMM d, yyyy')}`;
+      }
+
+      setSummaryData({
+        availablePool: totalContributions - totalWithdrawals,
+        pendingRequests: pendingWithdrawals.length,
+        myLastWithdrawal: lastWithdrawalString,
+      });
+    }
     fetchData();
-  }, []);
+  }, [userEmail]);
 
   const summaryCards = [
     { title: "Available Pool", value: formatCurrency(summaryData.availablePool) },

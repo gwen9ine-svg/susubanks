@@ -68,18 +68,32 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   
   useEffect(() => {
     const role = localStorage.getItem('userRole');
+    const name = localStorage.getItem('userName');
     setUserRole(role);
+    setUserName(name);
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('userRole');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
     router.push('/login');
   };
 
   const isActive = (href: string) => pathname === href
+
+  const getAvatarFallback = () => {
+    if (!userName) return 'U';
+    const parts = userName.split(' ');
+    if (parts.length > 1) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return userName.substring(0, 2).toUpperCase();
+  }
 
   return (
     <SidebarProvider>
@@ -142,11 +156,11 @@ export default function DashboardLayout({
                     <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent cursor-pointer group-data-[collapsible=icon]:justify-center">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src="https://picsum.photos/100/100" data-ai-hint="person avatar" alt="@shadcn" />
-                        <AvatarFallback>{userRole === 'admin' ? 'AD' : 'US'}</AvatarFallback>
+                        <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                         <span className="text-sm font-medium text-sidebar-foreground">{userRole === 'admin' ? 'Admin User' : 'Regular User'}</span>
-                         <span className="text-xs text-sidebar-foreground/70">{userRole === 'admin' ? 'Admin' : 'User'}</span>
+                         <span className="text-sm font-medium text-sidebar-foreground">{userName || 'User'}</span>
+                         <span className="text-xs text-sidebar-foreground/70 capitalize">{userRole || 'User'}</span>
                       </div>
                     </div>
                 </DropdownMenuTrigger>

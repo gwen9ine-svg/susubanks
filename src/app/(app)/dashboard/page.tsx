@@ -75,9 +75,17 @@ export default function DashboardPage() {
     loansOutstanding: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email);
+  }, []);
+
+  useEffect(() => {
+    if (!userEmail) return;
+
     async function fetchData() {
       setLoading(true);
       const memberData = await getCollection('members') as Member[];
@@ -93,7 +101,7 @@ export default function DashboardPage() {
         .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
         
       const myContributions = transactionData
-        .filter(tx => tx.type === 'Contribution' && tx.email === 'k.adu@example.com')
+        .filter(tx => tx.type === 'Contribution' && tx.email === userEmail)
         .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
 
       const activeMembersData = memberData.filter(m => m.status === 'Active');
@@ -114,45 +122,12 @@ export default function DashboardPage() {
       setLoading(false);
     }
     fetchData();
-  }, []);
+  }, [userEmail]);
 
   const handleSeed = async () => {
     setLoading(true);
     await seedDatabase();
-    // Re-fetch data after seeding
-    const memberData = await getCollection('members');
-    const transactionData = await getCollection('transactions');
-    const loanData = await getCollection('loans');
-    
-     const totalContributions = (transactionData as Transaction[])
-        .filter(tx => tx.type === 'Contribution')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-
-      const totalWithdrawals = (transactionData as Transaction[])
-        .filter(tx => tx.type === 'Withdrawal')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-        
-      const myContributions = (transactionData as Transaction[])
-        .filter(tx => tx.type === 'Contribution' && tx.email === 'k.adu@example.com')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-
-      const activeMembersData = (memberData as Member[]).filter(m => m.status === 'Active');
-      const activeMembers = activeMembersData.length;
-
-      const loansOutstanding = (loanData as Loan[])
-        .filter(loan => loan.status === 'Outstanding')
-        .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
-
-      setMembers(activeMembersData);
-      setSummary({
-        groupBalance: totalContributions - totalWithdrawals,
-        myContributions,
-        activeMembers,
-        loansOutstanding,
-      });
-
-    setLoading(false);
-    router.refresh();
+    router.refresh(); // This will re-trigger the useEffect to fetch data
   };
 
   const getNextDueDate = () => {
@@ -203,7 +178,7 @@ export default function DashboardPage() {
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            </CardHeader>
+            </Header>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>
             </CardContent>

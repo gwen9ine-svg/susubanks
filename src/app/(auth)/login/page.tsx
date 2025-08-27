@@ -10,31 +10,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SusuLogo } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
+import { getCollection } from "@/services/firestore";
+
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: 'Admin' | 'Member' | string;
+  contributed: string;
+  status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | string;
+};
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogin = () => {
-    // Default credentials
-    const adminEmail = 'admin@example.com';
-    const userEmail = 'user@example.com';
+  const handleLogin = async () => {
+    setIsLoading(true);
+    // In a real app, you would have a more secure password check.
+    // For this demo, we'll just check the email and a static password.
     const defaultPassword = 'password';
 
-    if (email === adminEmail && password === defaultPassword) {
-      localStorage.setItem('userRole', 'admin');
-      router.push('/dashboard');
-    } else if (email === userEmail && password === defaultPassword) {
-      localStorage.setItem('userRole', 'user');
-      router.push('/dashboard');
-    } else {
+    if (!email || !password) {
       toast({
         title: "Login Failed",
-        description: "Invalid email or password.",
+        description: "Please enter both email and password.",
         variant: "destructive",
       });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const members = await getCollection('members') as Member[];
+      const user = members.find(member => member.email.toLowerCase() === email.toLowerCase());
+
+      if (user && password === defaultPassword) {
+        // In a real app, you'd use a secure way to manage sessions (e.g., JWT).
+        // For this demo, localStorage is used for simplicity.
+        localStorage.setItem('userRole', user.role.toLowerCase());
+        localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('userName', user.name);
+        router.push('/dashboard');
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Invalid email or password.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Login Error",
+        description: "Could not connect to the authentication service. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,8 +101,8 @@ export default function LoginPage() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleLogin}>
-          Login
+        <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleLogin} disabled={isLoading}>
+          {isLoading ? 'Logging in...' : 'Login'}
         </Button>
         <Button variant="outline" className="w-full" asChild>
            <Link href="/register">Create Account</Link>

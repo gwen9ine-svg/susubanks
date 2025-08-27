@@ -57,6 +57,8 @@ export default function ContributionsPage() {
   const [contributionHistory, setContributionHistory] = useState<Transaction[]>([]);
   const [allContributions, setAllContributions] = useState<Transaction[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const [summaryData, setSummaryData] = useState({
     totalContributions: 0,
@@ -80,22 +82,31 @@ export default function ContributionsPage() {
     
     const totalContributions = contributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
     
-    // Hardcoded user, replace with actual logged in user in a real app
-    const myContributions = contributions
-      .filter(tx => tx.email === 'user@example.com' || tx.email === 'k.adu@example.com') 
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    if (userEmail) {
+      const myContributions = contributions
+        .filter(tx => tx.email === userEmail) 
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const myContributionTotal = myContributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-      
-    setContributionHistory(myContributions);
-    setSummaryData({ totalContributions, myContributions: myContributionTotal });
+      const myContributionTotal = myContributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+        
+      setContributionHistory(myContributions);
+      setSummaryData({ totalContributions, myContributions: myContributionTotal });
+    }
   }
 
   useEffect(() => {
-    fetchContributionData();
     const role = localStorage.getItem('userRole');
+    const email = localStorage.getItem('userEmail');
+    const name = localStorage.getItem('userName');
     setUserRole(role);
+    setUserEmail(email);
+    setUserName(name);
   }, []);
+  
+  useEffect(() => {
+    fetchContributionData();
+  }, [userEmail]);
+
 
   const clearForm = () => {
     setAmount('');
@@ -107,10 +118,10 @@ export default function ContributionsPage() {
   }
 
   const handleSubmit = async () => {
-    if (!amount || !group) {
+    if (!amount || !group || !userEmail || !userName) {
         toast({
             title: "Validation Error",
-            description: "Please fill in the amount and select a group.",
+            description: "Please fill in all required fields.",
             variant: "destructive",
         });
         return;
@@ -119,9 +130,8 @@ export default function ContributionsPage() {
 
     const newContribution = {
       id: uuidv4(),
-      // Hardcoding user details for now
-      member: "Regular User", 
-      email: "user@example.com",
+      member: userName, 
+      email: userEmail,
       avatar: "https://picsum.photos/100/100",
       ref: `CONT-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
       type: 'Contribution',
@@ -345,13 +355,13 @@ export default function ContributionsPage() {
                             <TableCell>{item.date}</TableCell>
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>
-                            {item.status === 'Completed' || item.status === 'Rejected' ? (
-                                    <Button variant="outline" size="sm" disabled>{item.status}</Button>
-                            ) : (
+                            {item.status.toLowerCase() === 'processing' ? (
                                 <div className="flex gap-2">
                                         <Button onClick={() => handleContributionStatus(item.id, 'Completed')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
                                         <Button onClick={() => handleContributionStatus(item.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
                                     </div>
+                            ) : (
+                                <Button variant="outline" size="sm" disabled>{item.status}</Button>
                             )}
                             </TableCell>
                         </TableRow>
