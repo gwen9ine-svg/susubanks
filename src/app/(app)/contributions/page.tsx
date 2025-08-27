@@ -162,6 +162,19 @@ export default function ContributionsPage() {
     { title: "My Contributions", value: formatCurrency(summaryData.myContributions) },
     { title: "Next Due", value: "July 25, 2024" }, // This remains static for now
   ];
+  
+    const getStatusBadge = (status: string) => {
+        switch(status.toLowerCase()) {
+            case 'completed':
+            case 'settled':
+                return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
+            case 'processing':
+                return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+            default:
+                return <Badge variant="outline">{status}</Badge>;
+        }
+    }
+
 
   return (
     <div className="space-y-6">
@@ -269,7 +282,7 @@ export default function ContributionsPage() {
                       <TableRow key={item.id}>
                           <TableCell className="font-medium">{item.ref}</TableCell>
                           <TableCell>{item.amount}</TableCell>
-                          <TableCell><Badge variant={item.status === 'Completed' || item.status === 'Settled' ? 'default' : 'secondary'} className={item.status === 'Completed' || item.status === 'Settled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>{item.status}</Badge></TableCell>
+                          <TableCell>{getStatusBadge(item.status)}</TableCell>
                           <TableCell>{item.date}</TableCell>
                       </TableRow>
                       ))
@@ -310,11 +323,11 @@ export default function ContributionsPage() {
                         <TableCell><Badge variant="outline" className="border-primary/50 text-primary">{item.type}</Badge></TableCell>
                         <TableCell>{item.amount}</TableCell>
                         <TableCell>{item.date}</TableCell>
-                        <TableCell><Badge variant={item.status === 'Completed' || item.status === 'Settled' ? 'default' : 'secondary'} className={item.status === 'Completed' || item.status === 'Settled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>{item.status}</Badge></TableCell>
+                        <TableCell>{getStatusBadge(item.status)}</TableCell>
                         <TableCell>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
-                                <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
+                           <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700" disabled={item.status === 'Completed'}>Accept</Button>
+                                <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700" disabled={item.status === 'Completed'}>Decline</Button>
                             </div>
                         </TableCell>
                     </TableRow>
