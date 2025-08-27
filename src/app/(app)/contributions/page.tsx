@@ -190,7 +190,7 @@ export default function ContributionsPage() {
           <CardContent className="space-y-4">
              <div className="space-y-2">
                 <Label htmlFor="amount">Amount</Label>
-                <Input id="amount" type="number" placeholder="250.00" value={amount} onChange={(e) => setAmount(e.target.value)} min="50" max="100000" step="0.01" />
+                <Input id="amount" type="number" placeholder="50.00" value={amount} onChange={(e) => setAmount(e.target.value)} min="50" max="100000" step="0.01" />
             </div>
              <div className="space-y-2">
                 <Label htmlFor="group-name">Group Name</Label>
@@ -271,7 +271,7 @@ export default function ContributionsPage() {
                         <TableCell>{item.date}</TableCell>
                     </TableRow>
                     ))}
-                </TableBody>
+                </Body>
             </Table>
           </CardContent>
         </Card>
