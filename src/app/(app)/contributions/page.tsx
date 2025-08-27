@@ -1,3 +1,7 @@
+
+'use client';
+
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -20,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Download } from "lucide-react";
 
 const summaryCards = [
   { title: "Total Contributions", value: "$8,750.00" },
@@ -43,6 +46,8 @@ const allContributions = [
 ];
 
 export default function ContributionsPage() {
+  const [depositMethod, setDepositMethod] = useState('bank');
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -84,6 +89,36 @@ export default function ContributionsPage() {
                   </SelectContent>
                 </Select>
             </div>
+             <div className="space-y-2">
+                <Label htmlFor="deposit-to">Deposit To</Label>
+                <Select onValueChange={setDepositMethod} defaultValue="bank">
+                  <SelectTrigger id="deposit-to">
+                    <SelectValue placeholder="Select deposit method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bank">Bank Account</SelectItem>
+                    <SelectItem value="momo">Momo</SelectItem>
+                  </SelectContent>
+                </Select>
+            </div>
+            {depositMethod === 'bank' && (
+              <div className="space-y-4 rounded-md border p-4">
+                 <div className="space-y-2">
+                  <Label htmlFor="bank-name">Bank Name</Label>
+                  <Input id="bank-name" placeholder="Enter bank name" />
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="account-number">Account Number</Label>
+                  <Input id="account-number" placeholder="Enter account number" />
+                </div>
+              </div>
+            )}
+            {depositMethod === 'momo' && (
+              <div className="space-y-2 rounded-md border p-4">
+                 <Label htmlFor="momo-number">Momo Number</Label>
+                  <Input id="momo-number" placeholder="Enter momo number" />
+              </div>
+            )}
             <div className="space-y-2">
                 <Label htmlFor="note">Note</Label>
                 <Textarea id="note" placeholder="Optional note for the transaction" />
