@@ -346,7 +346,7 @@ export default function ContributionsPage() {
                             <TableCell>{item.date}</TableCell>
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>
-                            {item.status === 'Completed' || item.status === 'Settled' || item.status === 'Rejected' ? (
+                            {item.status === 'Completed' || item.status === 'Rejected' ? (
                                     <Button variant="outline" size="sm" disabled>{item.status}</Button>
                             ) : (
                                 <div className="flex gap-2">

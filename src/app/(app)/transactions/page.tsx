@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from "react";
@@ -56,7 +57,6 @@ const getTypeBadge = (type: string) => {
 const getStatusBadge = (status: string) => {
     switch(status.toLowerCase()) {
         case 'completed':
-        case 'settled':
             return <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>;
         case 'pending':
         case 'processing':
