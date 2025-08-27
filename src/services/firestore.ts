@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { collection, getDocs, writeBatch, doc, addDoc, setDoc } from 'firebase/firestore';
 
 // A placeholder for a more robust data fetching service.
 // In a real app, you'd have more specific functions like `getUsers`, `getTransactions`, etc.
@@ -18,6 +18,24 @@ export async function getCollection(collectionName: string) {
     return [];
   }
 }
+
+export async function addDocument(collectionName: string, data: any, id?: string) {
+    try {
+        if (id) {
+            // Use setDoc if a specific ID is provided
+            await setDoc(doc(db, collectionName, id), data);
+            return { success: true, id };
+        } else {
+            // Use addDoc for Firestore to auto-generate an ID
+            const docRef = await addDoc(collection(db, collectionName), data);
+            return { success: true, id: docRef.id };
+        }
+    } catch (error) {
+        console.error('Error adding document:', error);
+        return { success: false, error: "Failed to add document." };
+    }
+}
+
 
 // Example seed function (you would call this once, perhaps from a script)
 export async function seedDatabase() {

@@ -24,7 +24,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { getCollection } from '@/services/firestore';
+import { addDocument, getCollection } from '@/services/firestore';
+import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 type Transaction = {
   id: string;
@@ -61,29 +63,99 @@ const allContributions = [
 ];
 
 export default function ContributionsPage() {
+  const { toast } = useToast();
   const [depositMethod, setDepositMethod] = useState('bank');
   const [summaryData, setSummaryData] = useState({
     totalContributions: 0,
     myContributions: 0,
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      const transactionData = await getCollection('transactions') as Transaction[];
-      const contributions = transactionData.filter(tx => tx.type === 'Contribution');
-      
-      const totalContributions = contributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-      
-      // NOTE: Hardcoding 'my' contributions to a specific user for now.
-      // In a real app, this would be based on the logged-in user's ID.
-      const myContributions = contributions
-        .filter(tx => tx.email === 'k.adu@example.com')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+  // Form state
+  const [amount, setAmount] = useState('');
+  const [group, setGroup] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [momoNumber, setMomoNumber] = useState('');
+  const [note, setNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-      setSummaryData({ totalContributions, myContributions });
-    }
-    fetchData();
+  async function fetchContributionData() {
+    const transactionData = await getCollection('transactions') as Transaction[];
+    const contributions = transactionData.filter(tx => tx.type === 'Contribution');
+    
+    const totalContributions = contributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+    
+    const myContributions = contributions
+      .filter(tx => tx.email === 'k.adu@example.com') // Hardcoded user
+      .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+    setSummaryData({ totalContributions, myContributions });
+  }
+
+  useEffect(() => {
+    fetchContributionData();
   }, []);
+
+  const clearForm = () => {
+    setAmount('');
+    setGroup('');
+    setBankName('');
+    setAccountNumber('');
+    setMomoNumber('');
+    setNote('');
+  }
+
+  const handleSubmit = async () => {
+    if (!amount || !group) {
+        toast({
+            title: "Validation Error",
+            description: "Please fill in the amount and select a group.",
+            variant: "destructive",
+        });
+        return;
+    }
+    setIsSubmitting(true);
+
+    const newContribution = {
+      id: uuidv4(),
+      // Hardcoding user details for now
+      member: "Regular User", 
+      email: "user@example.com",
+      avatar: "https://picsum.photos/100/100",
+      ref: `CONT-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+      type: 'Contribution',
+      amount: formatCurrency(parseFloat(amount)),
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      status: 'Processing',
+      note: note,
+      depositDetails: {
+        method: depositMethod,
+        bankName: depositMethod === 'bank' ? bankName : null,
+        accountNumber: depositMethod === 'bank' ? accountNumber : null,
+        momoNumber: depositMethod === 'momo' ? momoNumber : null,
+      }
+    };
+
+    try {
+        await addDocument('transactions', newContribution, newContribution.id);
+        toast({
+            title: "Contribution Submitted",
+            description: "Your contribution has been submitted for processing.",
+        });
+        await fetchContributionData(); // Re-fetch summary data
+        clearForm();
+    } catch(error) {
+        console.error("Error submitting contribution:", error);
+        toast({
+            title: "Submission Error",
+            description: "There was an error submitting your contribution. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
 
   const summaryCards = [
     { title: "Total Contributions", value: formatCurrency(summaryData.totalContributions) },
@@ -118,11 +190,11 @@ export default function ContributionsPage() {
           <CardContent className="space-y-4">
              <div className="space-y-2">
                 <Label htmlFor="amount">Amount</Label>
-                <Input id="amount" type="number" placeholder="250.00" />
+                <Input id="amount" type="number" placeholder="250.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
             </div>
              <div className="space-y-2">
                 <Label htmlFor="group-name">Group Name</Label>
-                <Select>
+                <Select value={group} onValueChange={setGroup}>
                   <SelectTrigger id="group-name">
                     <SelectValue placeholder="Select group" />
                   </SelectTrigger>
@@ -134,7 +206,7 @@ export default function ContributionsPage() {
             </div>
              <div className="space-y-2">
                 <Label htmlFor="deposit-to">Deposit To</Label>
-                <Select onValueChange={setDepositMethod} defaultValue="bank">
+                <Select onValueChange={setDepositMethod} defaultValue="bank" value={depositMethod}>
                   <SelectTrigger id="deposit-to">
                     <SelectValue placeholder="Select deposit method" />
                   </SelectTrigger>
@@ -148,30 +220,30 @@ export default function ContributionsPage() {
               <div className="space-y-4 rounded-md border p-4">
                  <div className="space-y-2">
                   <Label htmlFor="bank-name">Bank Name</Label>
-                  <Input id="bank-name" placeholder="Enter bank name" />
+                  <Input id="bank-name" placeholder="Enter bank name" value={bankName} onChange={(e) => setBankName(e.target.value)}/>
                 </div>
                  <div className="space-y-2">
                   <Label htmlFor="account-number">Account Number</Label>
-                  <Input id="account-number" placeholder="Enter account number" />
+                  <Input id="account-number" placeholder="Enter account number" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)}/>
                 </div>
               </div>
             )}
             {depositMethod === 'momo' && (
               <div className="space-y-2 rounded-md border p-4">
                  <Label htmlFor="momo-number">Momo Number</Label>
-                  <Input id="momo-number" placeholder="Enter momo number" />
+                  <Input id="momo-number" placeholder="Enter momo number" value={momoNumber} onChange={(e) => setMomoNumber(e.target.value)}/>
               </div>
             )}
             <div className="space-y-2">
                 <Label htmlFor="note">Note</Label>
-                <Textarea id="note" placeholder="Optional note for the transaction" />
+                <Textarea id="note" placeholder="Optional note for the transaction" value={note} onChange={(e) => setNote(e.target.value)}/>
             </div>
           </CardContent>
           <CardFooter className="flex-col items-start gap-4">
             <p className="text-xs text-muted-foreground">Your contribution will be marked as 'Processing' until confirmed by an admin.</p>
             <div className="flex flex-col gap-2">
-                <Button>Submit Contribution</Button>
-                <Button variant="ghost">Cancel</Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>{isSubmitting ? 'Submitting...' : 'Submit Contribution'}</Button>
+                <Button variant="ghost" onClick={clearForm}>Cancel</Button>
             </div>
           </CardFooter>
         </Card>
@@ -209,7 +281,7 @@ export default function ContributionsPage() {
         <CardHeader>
             <CardTitle>All Contributions</CardTitle>
             <CardDescription>A log of all contributions from every member.</CardDescription>
-        </CardHeader>
+        </Header>
         <CardContent>
             <Table>
                 <TableHeader>
