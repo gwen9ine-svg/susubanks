@@ -325,10 +325,14 @@ export default function ContributionsPage() {
                         <TableCell>{item.date}</TableCell>
                         <TableCell>{getStatusBadge(item.status)}</TableCell>
                         <TableCell>
-                           <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700" disabled={item.status === 'Completed'}>Accept</Button>
-                                <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700" disabled={item.status === 'Completed'}>Decline</Button>
-                            </div>
+                           {item.status === 'Completed' ? (
+                                <Button variant="outline" size="sm" disabled>Done</Button>
+                           ) : (
+                               <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
+                                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
+                                </div>
+                           )}
                         </TableCell>
                     </TableRow>
                     ))}
