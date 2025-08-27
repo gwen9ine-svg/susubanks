@@ -312,9 +312,9 @@ export default function ContributionsPage() {
                         <TableCell>{item.date}</TableCell>
                         <TableCell><Badge variant={item.status === 'Completed' || item.status === 'Settled' ? 'default' : 'secondary'} className={item.status === 'Completed' || item.status === 'Settled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>{item.status}</Badge></TableCell>
                         <TableCell>
-                            <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
+                            <div className="flex gap-2">
+                                <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
+                                <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
                             </div>
                         </TableCell>
                     </TableRow>
