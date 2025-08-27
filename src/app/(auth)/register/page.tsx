@@ -12,32 +12,92 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SusuLogo } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { addDocument } from "@/services/firestore";
+import { v4 as uuidv4 } from "uuid";
 
 export default function RegisterPage() {
   const { toast } = useToast();
   const router = useRouter();
+  
+  const [fullName, setFullName] = useState('');
+  const [dob, setDob] = useState('');
+  const [nationality, setNationality] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [govIdType, setGovIdType] = useState('');
+  const [idNumber, setIdNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [sourceOfFunds, setSourceOfFunds] = useState('');
   const [agreed, setAgreed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreateAccount = () => {
+  const handleCreateAccount = async () => {
+    setIsLoading(true);
+
     // Basic validation
-    if (!agreed) {
+    if (!fullName || !email || !password || !confirmPassword || !agreed) {
       toast({
-        title: "Agreement Required",
-        description: "You must agree to the Terms of Service to create an account.",
+        title: "Validation Error",
+        description: "Please fill out all required fields and agree to the terms.",
         variant: "destructive",
       });
+      setIsLoading(false);
       return;
     }
 
-    // In a real app, you would handle form data submission here.
-    toast({
-      title: "Account Created Successfully!",
-      description: "You will now be redirected to the login page.",
-    });
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Your passwords do not match. Please re-enter them.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
-    setTimeout(() => {
-        router.push('/login');
-    }, 2000);
+    const newMember = {
+        id: uuidv4(),
+        name: fullName,
+        email: email,
+        phone: phone,
+        dob: dob,
+        nationality: nationality,
+        address: address,
+        govIdType: govIdType,
+        idNumber: idNumber,
+        sourceOfFunds: sourceOfFunds,
+        password: password, // In a real app, this should be hashed.
+        role: "Member", // Default role
+        status: "Active", // Default status
+        contributed: "GH₵0.00", // Initial contribution
+        avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
+    };
+
+    try {
+        const result = await addDocument('members', newMember, newMember.id);
+        if (result.success) {
+            toast({
+              title: "Account Created Successfully!",
+              description: "You will now be redirected to the login page.",
+            });
+            setTimeout(() => {
+                router.push('/login');
+            }, 2000);
+        } else {
+            throw new Error(result.error || "An unknown error occurred");
+        }
+    } catch (error) {
+        console.error("Registration error:", error);
+        toast({
+            title: "Registration Failed",
+            description: "Could not create your account. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -51,16 +111,16 @@ export default function RegisterPage() {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="full-name">Full Name</Label>
-          <Input id="full-name" placeholder="As shown on your government ID" required />
+          <Input id="full-name" placeholder="As shown on your government ID" required value={fullName} onChange={e => setFullName(e.target.value)} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="dob">Date of Birth</Label>
-            <Input id="dob" type="date" required />
+            <Input id="dob" type="date" required value={dob} onChange={e => setDob(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="nationality">Nationality</Label>
-            <Select>
+            <Select value={nationality} onValueChange={setNationality}>
               <SelectTrigger id="nationality">
                 <SelectValue placeholder="Select nationality" />
               </SelectTrigger>
@@ -77,22 +137,22 @@ export default function RegisterPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" required />
+                <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" type="tel" placeholder="+233 12 345 6789" required />
+                <Input id="phone" type="tel" placeholder="+233 12 345 6789" required value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="address">Residential Address</Label>
-          <Input id="address" placeholder="123 Main St, Anytown, USA" required />
+          <Input id="address" placeholder="123 Main St, Anytown, USA" required value={address} onChange={e => setAddress(e.target.value)} />
           <p className="text-xs text-muted-foreground">We use this to verify your identity and eligibility.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="gov-id-type">Government ID Type</Label>
-            <Select>
+            <Select value={govIdType} onValueChange={setGovIdType}>
               <SelectTrigger id="gov-id-type">
                 <SelectValue placeholder="Select ID type" />
               </SelectTrigger>
@@ -106,25 +166,25 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="id-number">ID Number</Label>
-            <Input id="id-number" placeholder="Enter ID number" />
+            <Input id="id-number" placeholder="Enter ID number" value={idNumber} onChange={e => setIdNumber(e.target.value)} />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" required />
+                <Input id="password" type="password" placeholder="••••••••" required value={password} onChange={e => setPassword(e.target.value)} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input id="confirm-password" type="password" placeholder="••••••••" required />
+                <Input id="confirm-password" type="password" placeholder="••••••••" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
             </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="source-of-funds">Source of Funds</Label>
-          <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." />
+          <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
         </div>
         <div className="flex items-start space-x-2">
-          <Checkbox id="terms" onCheckedChange={(checked) => setAgreed(!!checked)} />
+          <Checkbox id="terms" checked={agreed} onCheckedChange={(checked) => setAgreed(!!checked)} />
           <div className="grid gap-1.5 leading-none">
             <label
               htmlFor="terms"
@@ -139,8 +199,8 @@ export default function RegisterPage() {
         <Button variant="outline" asChild>
           <Link href="/login">Back</Link>
         </Button>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleCreateAccount}>
-            <span>Create Account</span>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleCreateAccount} disabled={isLoading}>
+            <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
         </Button>
       </CardFooter>
     </Card>
