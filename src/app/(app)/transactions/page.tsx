@@ -1,9 +1,12 @@
+
+'use client';
+
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription
 } from "@/components/ui/card";
 import {
   Table,
@@ -15,22 +18,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Copy, History } from "lucide-react";
+import { Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getCollection } from "@/services/firestore";
 
 const summaryCards = [
   { title: "Total Volume", value: "GH₵25,345.00", count: "312 entries" },
   { title: "Contributions", value: "GH₵18,750.00", count: "250 entries" },
   { title: "Withdrawals", value: "GH₵6,595.00", count: "48 entries" },
   { title: "Fees & Adjustments", value: "GH₵0.00", count: "14 entries" },
-];
-
-const transactions = [
-    { ref: "CONT-07-2024-A1", member: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Settled" },
-    { ref: "WDR-07-2024-C3", member: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", type: "Withdrawal", amount: "GH₵1,000.00", date: "July 2, 2024", status: "Pending" },
-    { ref: "CONT-07-2024-B2", member: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Settled" },
 ];
 
 const getTypeBadge = (type: string) => {
@@ -56,6 +52,19 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function TransactionsPage() {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTransactions() {
+      setLoading(true);
+      const transactionData = await getCollection('transactions');
+      setTransactions(transactionData);
+      setLoading(false);
+    }
+    fetchTransactions();
+  }, []);
+
   return (
     <div className="space-y-6">
        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -101,8 +110,12 @@ export default function TransactionsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {transactions.map((tx, i) => (
-                                <TableRow key={i} className="cursor-pointer hover:bg-muted/50">
+                          {loading ? (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center">Loading transactions...</TableCell>
+                            </TableRow>
+                          ) : transactions.length > 0 ? transactions.map((tx: any) => (
+                                <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.ref}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
@@ -118,7 +131,11 @@ export default function TransactionsPage() {
                                     <TableCell>{tx.date}</TableCell>
                                     <TableCell>{getStatusBadge(tx.status)}</TableCell>
                                 </TableRow>
-                            ))}
+                            )) : (
+                              <TableRow>
+                                <TableCell colSpan={6} className="text-center">No transactions found.</TableCell>
+                              </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>

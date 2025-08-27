@@ -28,15 +28,28 @@ export async function seedDatabase() {
       { id: '4', name: "Adwoa Boateng", email: "a.boateng@example.com", avatar: "https://picsum.photos/100/100?d", role: "Member", contributed: "GH₵2,200", status: "Active" },
       { id: '5', name: "Kwame Nkrumah", email: "k.nkrumah@example.com", avatar: "https://picsum.photos/100/100?e", role: "Member", contributed: "GH₵1,500", status: "Suspended" },
     ];
+    
+    const transactions = [
+        { id: 'tx1', ref: "CONT-07-2024-A1", member: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Settled" },
+        { id: 'tx2', ref: "WDR-07-2024-C3", member: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", type: "Withdrawal", amount: "GH₵1,000.00", date: "July 2, 2024", status: "Pending" },
+        { id: 'tx3', ref: "CONT-07-2024-B2", member: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Settled" },
+    ];
 
     try {
         const batch = writeBatch(db);
-        const membersRef = collection(db, 'members');
         
         console.log('Seeding members collection...');
+        const membersRef = collection(db, 'members');
         members.forEach((member) => {
             const docRef = doc(membersRef, member.id);
             batch.set(docRef, member);
+        });
+
+        console.log('Seeding transactions collection...');
+        const transactionsRef = collection(db, 'transactions');
+        transactions.forEach((transaction) => {
+            const docRef = doc(transactionsRef, transaction.id);
+            batch.set(docRef, transaction);
         });
 
         await batch.commit();
