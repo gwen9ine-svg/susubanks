@@ -1,5 +1,8 @@
 
+'use client';
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,8 +10,36 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SusuLogo } from "@/components/icons";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function RegisterPage() {
+  const { toast } = useToast();
+  const router = useRouter();
+  const [agreed, setAgreed] = useState(false);
+
+  const handleCreateAccount = () => {
+    // Basic validation
+    if (!agreed) {
+      toast({
+        title: "Agreement Required",
+        description: "You must agree to the Terms of Service to create an account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // In a real app, you would handle form data submission here.
+    toast({
+      title: "Account Created Successfully!",
+      description: "You will now be redirected to the login page.",
+    });
+
+    setTimeout(() => {
+        router.push('/login');
+    }, 2000);
+  };
+
   return (
     <Card className="w-full max-w-2xl">
       <CardHeader className="text-center">
@@ -73,7 +104,7 @@ export default function RegisterPage() {
           <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." />
         </div>
         <div className="flex items-start space-x-2">
-          <Checkbox id="terms" />
+          <Checkbox id="terms" onCheckedChange={(checked) => setAgreed(!!checked)} />
           <div className="grid gap-1.5 leading-none">
             <label
               htmlFor="terms"
@@ -88,13 +119,8 @@ export default function RegisterPage() {
         <Button variant="outline" asChild>
           <Link href="/login">Back</Link>
         </Button>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
-          <Link href="/verify">
-            <div className="flex flex-col items-end">
-              <span>Create Account</span>
-              <span className="text-xs opacity-80 -mt-1">Final step: Review & submit</span>
-            </div>
-          </Link>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleCreateAccount}>
+            <span>Create Account</span>
         </Button>
       </CardFooter>
     </Card>
