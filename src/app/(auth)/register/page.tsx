@@ -1,0 +1,92 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { SusuLogo } from "@/components/icons";
+
+export default function RegisterPage() {
+  return (
+    <Card className="w-full max-w-2xl">
+      <CardHeader className="text-center">
+         <div className="mx-auto mb-4">
+          <SusuLogo isBank={true} />
+        </div>
+        <CardTitle className="text-2xl">Create your account</CardTitle>
+        <CardDescription>Step 3 of 3: Personal details</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="full-name">Full Name</Label>
+          <Input id="full-name" placeholder="As shown on your government ID" required />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="dob">Date of Birth</Label>
+            <Input id="dob" type="date" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="nationality">Nationality</Label>
+            <Select>
+              <SelectTrigger id="nationality">
+                <SelectValue placeholder="Select nationality" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="usa">United States</SelectItem>
+                <SelectItem value="can">Canada</SelectItem>
+                <SelectItem value="uk">United Kingdom</SelectItem>
+                 <SelectItem value="nga">Nigeria</SelectItem>
+                <SelectItem value="gha">Ghana</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Residential Address</Label>
+          <Input id="address" placeholder="123 Main St, Anytown, USA" required />
+          <p className="text-xs text-muted-foreground">We use this to verify your identity and eligibility.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="gov-id-type">Government ID Type</Label>
+            <Input id="gov-id-type" placeholder="Passport, Driver's license, etc." />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="id-number">ID Number</Label>
+            <Input id="id-number" placeholder="Enter ID number" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="source-of-funds">Source of Funds</Label>
+          <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." />
+        </div>
+        <div className="flex items-start space-x-2">
+          <Checkbox id="terms" />
+          <div className="grid gap-1.5 leading-none">
+            <label
+              htmlFor="terms"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              I confirm that the information provided is accurate and agree to the Terms of Service.
+            </label>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" asChild>
+          <Link href="/login">Back</Link>
+        </Button>
+        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" asChild>
+          <Link href="/verify">
+            <div className="flex flex-col items-end">
+              <span>Create Account</span>
+              <span className="text-xs opacity-80 -mt-1">Final step: Review & submit</span>
+            </div>
+          </Link>
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
