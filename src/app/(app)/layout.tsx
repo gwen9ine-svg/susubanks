@@ -97,13 +97,16 @@ export default function DashboardLayout({
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} legacyBehavior passHref>
+                  <Link href={item.href} passHref>
                     <SidebarMenuButton
+                      asChild
                       isActive={isActive(item.href)}
                       tooltip={{ children: item.label }}
                     >
-                      <item.icon />
-                      <span>{item.label}</span>
+                      <span>
+                        <item.icon />
+                        <span>{item.label}</span>
+                      </span>
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
@@ -115,13 +118,16 @@ export default function DashboardLayout({
                   </SidebarMenuItem>
                   {adminNavItems.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                      <Link href={item.href} legacyBehavior passHref>
+                      <Link href={item.href} passHref>
                         <SidebarMenuButton
+                          asChild
                           isActive={isActive(item.href)}
                           tooltip={{ children: item.label }}
                         >
-                          <item.icon />
-                          <span>{item.label}</span>
+                           <span>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </span>
                         </SidebarMenuButton>
                       </Link>
                     </SidebarMenuItem>
