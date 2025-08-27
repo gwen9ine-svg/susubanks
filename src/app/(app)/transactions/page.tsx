@@ -136,7 +136,6 @@ export default function TransactionsPage() {
                     <div className="flex justify-between"><span>Method:</span> <span className="font-medium">Bank Transfer</span></div>
                     <div className="flex justify-between"><span>Status:</span> <span className="font-medium">{getStatusBadge("Settled")}</span></div>
                     <div className="flex justify-between"><span>Category:</span> <span className="font-medium">Contribution</span></div>
-                    <div className="flex justify-between"><span>Cycle:</span> <span className="font-medium">Cycle 10</span></div>
                     <div>
                         <p>Notes:</p>
                         <p className="text-muted-foreground">July monthly contribution.</p>

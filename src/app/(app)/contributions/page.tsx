@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Download } from "lucide-react";
 
 const summaryCards = [
-  { title: "This Cycle Total", value: "$8,750.00" },
+  { title: "Total Contributions", value: "$8,750.00" },
   { title: "My Contributions", value: "$2,500.00" },
   { title: "Next Due", value: "July 25, 2024" },
 ];
@@ -36,10 +36,10 @@ const history = [
 ];
 
 const allContributions = [
-    { desc: "Cycle 10 Contribution", member: "Kofi Adu", type: "Contribution", amount: "$250.00", date: "July 1, 2024" },
-    { desc: "Cycle 10 Contribution", member: "Ama Serwaa", type: "Contribution", amount: "$250.00", date: "July 1, 2024" },
-    { desc: "Cycle 9 Contribution", member: "Kofi Adu", type: "Contribution", amount: "$250.00", date: "June 1, 2024" },
-    { desc: "Cycle 9 Contribution", member: "Yaw Mensah", type: "Contribution", amount: "$250.00", date: "June 1, 2024" },
+    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "$250.00", date: "July 1, 2024" },
+    { desc: "Contribution", member: "Ama Serwaa", type: "Contribution", amount: "$250.00", date: "July 1, 2024" },
+    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "$250.00", date: "June 1, 2024" },
+    { desc: "Contribution", member: "Yaw Mensah", type: "Contribution", amount: "$250.00", date: "June 1, 2024" },
 ];
 
 export default function ContributionsPage() {
@@ -77,13 +77,6 @@ export default function ContributionsPage() {
              <div className="space-y-2">
                 <Label htmlFor="amount">Amount</Label>
                 <Input id="amount" type="number" placeholder="250.00" />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="cycle">Cycle</Label>
-                 <Select>
-                    <SelectTrigger id="cycle"><SelectValue placeholder="Select cycle" /></SelectTrigger>
-                    <SelectContent><SelectItem value="c10">Cycle 10 (Current)</SelectItem><SelectItem value="c9">Cycle 9</SelectItem></SelectContent>
-                </Select>
             </div>
              <div className="space-y-2">
                 <Label htmlFor="method">Method</Label>

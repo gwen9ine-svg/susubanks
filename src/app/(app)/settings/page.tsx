@@ -117,13 +117,6 @@ export default function SettingsPage() {
                         <CardDescription>These actions are irreversible. Please be certain.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                       <div className="flex items-center justify-between">
-                           <div>
-                                <p className="font-medium">Archive cycle</p>
-                                <p className="text-sm text-muted-foreground">Archive the current contribution cycle.</p>
-                           </div>
-                           <Button variant="destructive" size="sm">Archive</Button>
-                       </div>
                         <div className="flex items-center justify-between">
                            <div>
                                 <p className="font-medium">Delete group</p>
