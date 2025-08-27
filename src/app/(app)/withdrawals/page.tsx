@@ -26,28 +26,11 @@ const summaryCards = [
   { title: "My Last Withdrawal", value: "$500 on May 15, 2024" },
 ];
 
-const pendingApprovals = [
-    { ref: "WDR-07-2024-C3", amount: "$1,000.00", member: "Yaw Mensah", status: "Awaiting" },
-    { ref: "WDR-07-2024-B2", amount: "$500.00", member: "Adwoa Boateng", status: "Needs 1 more" },
-    { ref: "WDR-06-2024-A1", amount: "$750.00", member: "Kwame Nkrumah", status: "Awaiting" },
-];
-
 const withdrawalHistory = [
     { desc: "Emergency Withdrawal", member: "Kofi Adu", type: "Withdrawal", amount: "$500.00", date: "May 15, 2024" },
     { desc: "Loan Repayment", member: "Ama Serwaa", type: "Loan", amount: "$1,200.00", date: "April 20, 2024" },
     { desc: "Personal Withdrawal", member: "Yaw Mensah", type: "Withdrawal", amount: "$300.00", date: "March 10, 2024" },
 ];
-
-const getStatusBadge = (status: string) => {
-    switch(status) {
-        case 'Awaiting':
-            return <Badge variant="secondary" className="bg-orange-100 text-orange-800">{status}</Badge>
-        case 'Needs 1 more':
-            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">{status}</Badge>
-        default:
-            return <Badge variant="outline">{status}</Badge>
-    }
-}
 
 
 export default function WithdrawalsPage() {
@@ -70,7 +53,7 @@ export default function WithdrawalsPage() {
         ))}
       </div>
       
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle>Request Withdrawal</CardTitle>
@@ -106,71 +89,43 @@ export default function WithdrawalsPage() {
           </CardContent>
           <CardFooter className="flex-col items-start gap-4">
             <p className="text-xs text-muted-foreground">Withdrawal requests require approval from 2 admins. This may take up to 48 hours.</p>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
                 <Button>Submit Request</Button>
                 <Button variant="ghost">Cancel</Button>
             </div>
           </CardFooter>
         </Card>
 
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Pending Approvals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Reference</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Member</TableHead>
-                        <TableHead>Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {pendingApprovals.map((item, i) => (
-                    <TableRow key={i}>
-                        <TableCell className="font-medium">{item.ref}</TableCell>
-                        <TableCell>{item.amount}</TableCell>
-                        <TableCell>{item.member}</TableCell>
-                        <TableCell>{getStatusBadge(item.status)}</TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+         <Card className="md:col-span-1">
+            <CardHeader>
+                <CardTitle>Withdrawal History</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Member</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Date</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {withdrawalHistory.map((item, i) => (
+                        <TableRow key={i}>
+                            <TableCell className="font-medium">{item.desc}</TableCell>
+                            <TableCell>{item.member}</TableCell>
+                            <TableCell><Badge variant="outline" className="border-accent text-accent">{item.type}</Badge></TableCell>
+                            <TableCell>{item.amount}</TableCell>
+                            <TableCell>{item.date}</TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+         </Card>
       </div>
-
-       <Card>
-        <CardHeader>
-            <CardTitle>Withdrawal History</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Member</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {withdrawalHistory.map((item, i) => (
-                    <TableRow key={i}>
-                        <TableCell className="font-medium">{item.desc}</TableCell>
-                        <TableCell>{item.member}</TableCell>
-                        <TableCell><Badge variant="outline" className="border-accent text-accent">{item.type}</Badge></TableCell>
-                        <TableCell>{item.amount}</TableCell>
-                        <TableCell>{item.date}</TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-       </Card>
     </div>
   );
 }
