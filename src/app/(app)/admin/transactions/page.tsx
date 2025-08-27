@@ -1,3 +1,6 @@
+
+'use client';
+
 import {
   Card,
   CardContent,
@@ -24,24 +27,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import { getCollection } from "@/services/firestore";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
-const summaryCards = [
-    { title: "Total Deposits", value: "GH₵18,750.00" },
-    { title: "Total Withdrawals", value: "GH₵6,595.00" },
-    { title: "Pending Reviews", value: "5" },
-    { title: "Disputes", value: "1" },
-];
+type Transaction = {
+  id: string;
+  ref: string;
+  member: string;
+  avatar: string;
+  type: 'Contribution' | 'Withdrawal' | 'Dispute' | string;
+  amount: string;
+  date: string;
+  status: 'Approved' | 'Pending' | 'Rejected' | 'Completed' | string;
+};
 
-const transactions = [
-    { time: "10:05 AM", type: "Deposit", member: "Kofi Adu", ref: "CONT-07-24-A1", amount: "GH₵250.00", status: "Approved" },
-    { time: "11:30 AM", type: "Withdrawal", member: "Yaw Mensah", ref: "WDR-07-24-C3", amount: "GH₵1,000.00", status: "Pending" },
-    { time: "02:15 PM", type: "Deposit", member: "Ama Serwaa", ref: "CONT-07-24-B2", amount: "GH₵250.00", status: "Approved" },
-    { time: "04:00 PM", type: "Dispute", member: "Adwoa Boateng", ref: "DIS-07-24-D4", amount: "GH₵50.00", status: "Rejected" },
-];
+const parseAmount = (amount: string): number => {
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
+
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
+}
 
 const getTypeBadge = (type: string) => {
     switch(type) {
-        case 'Deposit': return <Badge variant="outline" className="border-primary/50 text-primary">{type}</Badge>;
+        case 'Contribution':
+        case 'Deposit':
+             return <Badge variant="outline" className="border-primary/50 text-primary">{type}</Badge>;
         case 'Withdrawal': return <Badge variant="outline" className="border-accent text-accent">{type}</Badge>;
         case 'Dispute': return <Badge variant="destructive">{type}</Badge>;
         default: return <Badge variant="secondary">{type}</Badge>;
@@ -50,7 +65,9 @@ const getTypeBadge = (type: string) => {
 
 const getStatusBadge = (status: string) => {
     switch(status) {
-        case 'Approved': return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
+        case 'Approved':
+        case 'Completed':
+            return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
         case 'Pending': return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
         case 'Rejected': return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
         default: return <Badge variant="outline">{status}</Badge>;
@@ -58,6 +75,62 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function AdminTransactionsPage() {
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [summaryCards, setSummaryCards] = useState([
+        { title: "Total Deposits", value: formatCurrency(0) },
+        { title: "Total Withdrawals", value: formatCurrency(0) },
+        { title: "Pending Reviews", value: "0" },
+        { title: "Disputes", value: "0" },
+    ]);
+    const { toast } = useToast();
+
+    async function fetchTransactions() {
+        const transactionData = await getCollection('transactions') as Transaction[];
+        setTransactions(transactionData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        
+        const totalDeposits = transactionData
+            .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
+            .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+        const totalWithdrawals = transactionData
+            .filter(tx => tx.type === 'Withdrawal')
+            .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+            
+        const pendingReviews = transactionData.filter(tx => tx.status === 'Pending').length;
+        const disputes = transactionData.filter(tx => tx.type === 'Dispute').length;
+
+        setSummaryCards([
+            { title: "Total Deposits", value: formatCurrency(totalDeposits) },
+            { title: "Total Withdrawals", value: formatCurrency(totalWithdrawals) },
+            { title: "Pending Reviews", value: pendingReviews.toString() },
+            { title: "Disputes", value: disputes.toString() },
+        ]);
+    }
+
+    useEffect(() => {
+        fetchTransactions();
+    }, []);
+
+    const handleTransactionStatus = async (transactionId: string, newStatus: 'Approved' | 'Rejected') => {
+        const transactionRef = doc(db, 'transactions', transactionId);
+        try {
+            await setDoc(transactionRef, { status: newStatus }, { merge: true });
+            toast({
+                title: `Transaction ${newStatus}`,
+                description: `The transaction has been marked as ${newStatus}.`,
+            });
+            await fetchTransactions(); // Re-fetch data to update the UI
+        } catch (error) {
+            console.error("Error updating transaction status:", error);
+            toast({
+                title: "Update Error",
+                description: "Failed to update transaction status. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -97,10 +170,10 @@ export default function AdminTransactionsPage() {
                      <Card>
                         <CardHeader><CardTitle>Bulk Actions</CardTitle></CardHeader>
                         <CardContent className="space-y-4">
-                           <p className="text-sm text-muted-foreground">2 items selected</p>
+                           <p className="text-sm text-muted-foreground">0 items selected</p>
                            <div className="flex flex-col gap-2">
-                             <Button variant="outline" className="w-full">Approve All</Button>
-                             <Button variant="destructive" className="w-full">Reject All</Button>
+                             <Button variant="outline" className="w-full" disabled>Approve All</Button>
+                             <Button variant="destructive" className="w-full" disabled>Reject All</Button>
                            </div>
                         </CardContent>
                     </Card>
@@ -121,7 +194,7 @@ export default function AdminTransactionsPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead><Checkbox /></TableHead>
-                                                <TableHead>Time</TableHead>
+                                                <TableHead>Date</TableHead>
                                                 <TableHead>Type</TableHead>
                                                 <TableHead>Member</TableHead>
                                                 <TableHead>Reference</TableHead>
@@ -134,7 +207,7 @@ export default function AdminTransactionsPage() {
                                             {transactions.map((tx, i) => (
                                                 <TableRow key={i}>
                                                     <TableCell><Checkbox /></TableCell>
-                                                    <TableCell>{tx.time}</TableCell>
+                                                    <TableCell>{tx.date}</TableCell>
                                                     <TableCell>{getTypeBadge(tx.type)}</TableCell>
                                                     <TableCell>{tx.member}</TableCell>
                                                     <TableCell className="font-medium">{tx.ref}</TableCell>
@@ -143,8 +216,8 @@ export default function AdminTransactionsPage() {
                                                     <TableCell>
                                                         {tx.status === 'Pending' ? (
                                                             <div className="flex gap-1">
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
+                                                                <Button onClick={() => handleTransactionStatus(tx.id, 'Approved')} variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
+                                                                <Button onClick={() => handleTransactionStatus(tx.id, 'Rejected')} variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
                                                             </div>
                                                         ) : (
                                                             <DropdownMenu>

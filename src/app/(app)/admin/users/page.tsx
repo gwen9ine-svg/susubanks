@@ -23,25 +23,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MoreVertical, MessageSquare, CheckCircle, XCircle, Check, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
+import { getCollection } from "@/services/firestore";
 
-const summaryCards = [
-    { title: "Total Members", value: "52" },
-    { title: "Active Groups", value: "1" },
-    { title: "Monthly Deposits", value: "GH₵8,750.00" },
-    { title: "Loan Outstanding", value: "GH₵3,200.00" },
-];
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  contributed: string;
+  status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | string;
+};
 
-const initialUsers = [
-    { name: "Kofi Adu", avatar: "https://picsum.photos/100/100?a", status: "Contributor", id: "U-12345" },
-    { name: "Ama Serwaa", avatar: "https://picsum.photos/100/100?b", status: "Member", id: "U-12346" },
-    { name: "Yaw Mensah", avatar: "https://picsum.photos/100/100?c", status: "Loan", id: "U-12347" },
-    { name: "Adwoa Boateng", avatar: "https://picsum.photos/100/100?d", status: "Member", id: "U-12348" },
-    { name: "Kwame Nkrumah", avatar: "https://picsum.photos/100/100?e", status: "Suspended", id: "U-12349" },
-];
+type Transaction = {
+  id: string;
+  type: 'Contribution' | 'Withdrawal' | 'Deposit' | string;
+  amount: string;
+  email?: string;
+};
+
+type Loan = {
+  id: string;
+  amount: string;
+  status: 'Outstanding' | 'Paid' | string;
+}
+
+const parseAmount = (amount: string): number => {
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
+
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
+}
 
 const getStatusBadge = (status: string) => {
     switch (status) {
         case "Contributor": return "bg-blue-100 text-blue-800";
+        case "Active":
         case "Member": return "bg-green-100 text-green-800";
         case "Loan": return "bg-yellow-100 text-yellow-800";
         case "Suspended": return "bg-red-100 text-red-800";
@@ -50,16 +67,42 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function UsersDirectoryPage() {
-    const [users, setUsers] = useState(initialUsers);
-    const [loading, setLoading] = useState(false);
+    const [users, setUsers] = useState<Member[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [summaryCards, setSummaryCards] = useState([
+        { title: "Total Members", value: "0" },
+        { title: "Active Groups", value: "1" },
+        { title: "Monthly Deposits", value: formatCurrency(0) },
+        { title: "Loan Outstanding", value: formatCurrency(0) },
+    ]);
 
-    // Simulate fetching users, you can replace this with a real API call
     useEffect(() => {
+      async function fetchData() {
         setLoading(true);
-        setTimeout(() => {
-            setUsers(initialUsers);
-            setLoading(false);
-        }, 1000);
+        const memberData = await getCollection('members') as Member[];
+        const transactionData = await getCollection('transactions') as Transaction[];
+        const loanData = await getCollection('loans') as Loan[];
+
+        const totalMembers = memberData.length;
+        const monthlyDeposits = transactionData
+          .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
+          .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+        const loansOutstanding = loanData
+          .filter(loan => loan.status === 'Outstanding')
+          .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
+
+        setSummaryCards([
+          { title: "Total Members", value: totalMembers.toString() },
+          { title: "Active Groups", value: "1" },
+          { title: "Monthly Deposits", value: formatCurrency(monthlyDeposits) },
+          { title: "Loan Outstanding", value: formatCurrency(loansOutstanding) },
+        ]);
+
+        setUsers(memberData);
+        setLoading(false);
+      }
+      fetchData();
     }, []);
 
     return (

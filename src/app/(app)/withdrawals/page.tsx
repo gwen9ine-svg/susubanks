@@ -36,6 +36,7 @@ type Transaction = {
   date: string;
   status: string;
   email?: string;
+  desc?: string;
 };
 
 const parseAmount = (amount: string): number => {
@@ -46,49 +47,49 @@ const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
 }
 
-const withdrawalHistory = [
-    { desc: "Emergency Withdrawal", type: "Withdrawal", amount: "GH₵500.00", date: "May 15, 2024" },
-];
-
-
 export default function WithdrawalsPage() {
   const [withdrawalMethod, setWithdrawalMethod] = useState('bank');
+  const [withdrawalHistory, setWithdrawalHistory] = useState<Transaction[]>([]);
   const [summaryData, setSummaryData] = useState({
     availablePool: 0,
     pendingRequests: 0,
     myLastWithdrawal: "N/A",
   });
 
-  useEffect(() => {
-    async function fetchData() {
-      const transactionData = await getCollection('transactions') as Transaction[];
+  async function fetchData() {
+    const transactionData = await getCollection('transactions') as Transaction[];
+    
+    const totalContributions = transactionData
+      .filter(tx => tx.type === 'Contribution')
+      .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
       
-      const totalContributions = transactionData
-        .filter(tx => tx.type === 'Contribution')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-        
-      const totalWithdrawals = transactionData
-        .filter(tx => tx.type === 'Withdrawal')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+    const totalWithdrawals = transactionData
+      .filter(tx => tx.type === 'Withdrawal')
+      .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
 
-      const pendingWithdrawals = transactionData.filter(tx => tx.type === 'Withdrawal' && tx.status === 'Pending');
+    const pendingWithdrawals = transactionData.filter(tx => tx.type === 'Withdrawal' && tx.status === 'Pending');
 
-      const myWithdrawals = transactionData
-        .filter(tx => tx.type === 'Withdrawal' && tx.email === 'k.adu@example.com')
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Hardcoded user, replace with actual logged in user in a real app
+    const myWithdrawals = transactionData
+      .filter(tx => tx.type === 'Withdrawal' && (tx.email === 'user@example.com' || tx.email === 'k.adu@example.com'))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-      let lastWithdrawalString = "N/A";
-      if (myWithdrawals.length > 0) {
-        const lastTx = myWithdrawals[0];
-        lastWithdrawalString = `${lastTx.amount} on ${format(new Date(lastTx.date), 'MMM d, yyyy')}`;
-      }
+    setWithdrawalHistory(myWithdrawals);
 
-      setSummaryData({
-        availablePool: totalContributions - totalWithdrawals,
-        pendingRequests: pendingWithdrawals.length,
-        myLastWithdrawal: lastWithdrawalString,
-      });
+    let lastWithdrawalString = "N/A";
+    if (myWithdrawals.length > 0) {
+      const lastTx = myWithdrawals[0];
+      lastWithdrawalString = `${lastTx.amount} on ${format(new Date(lastTx.date), 'MMM d, yyyy')}`;
     }
+
+    setSummaryData({
+      availablePool: totalContributions - totalWithdrawals,
+      pendingRequests: pendingWithdrawals.length,
+      myLastWithdrawal: lastWithdrawalString,
+    });
+  }
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -198,14 +199,18 @@ export default function WithdrawalsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {withdrawalHistory.map((item, i) => (
+                        {withdrawalHistory.length > 0 ? withdrawalHistory.map((item, i) => (
                         <TableRow key={i}>
-                            <TableCell className="font-medium">{item.desc}</TableCell>
+                            <TableCell className="font-medium">{item.desc || item.type}</TableCell>
                             <TableCell><Badge variant="outline" className="border-accent text-accent">{item.type}</Badge></TableCell>
                             <TableCell>{item.amount}</TableCell>
                             <TableCell>{item.date}</TableCell>
                         </TableRow>
-                        ))}
+                        )) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center">No withdrawal history.</TableCell>
+                          </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </CardContent>
