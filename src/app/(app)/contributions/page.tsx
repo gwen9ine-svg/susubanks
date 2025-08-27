@@ -79,17 +79,6 @@ export default function ContributionsPage() {
                 <Input id="amount" type="number" placeholder="250.00" />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="method">Method</Label>
-                 <Select>
-                    <SelectTrigger id="method"><SelectValue placeholder="Select method" /></SelectTrigger>
-                    <SelectContent><SelectItem value="bank">Bank Transfer</SelectItem><SelectItem value="card">Card</SelectItem></SelectContent>
-                </Select>
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" />
-            </div>
-             <div className="space-y-2">
                 <Label htmlFor="reference">Reference / ID</Label>
                 <Input id="reference" placeholder="Optional transaction ID" />
             </div>
