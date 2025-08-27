@@ -7,7 +7,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
+  CardFooter,
+  CardDescription
 } from "@/components/ui/card";
 import {
   Table,
