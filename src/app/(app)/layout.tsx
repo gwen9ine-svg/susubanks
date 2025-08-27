@@ -42,9 +42,10 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar'
 import { SusuLogo } from '@/components/icons'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import React, { useEffect, useState } from 'react'
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -64,8 +65,20 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const router = useRouter();
+  const [userRole, setUserRole] = useState<string | null>(null);
   
+  useEffect(() => {
+    const role = localStorage.getItem('userRole');
+    setUserRole(role);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('userRole');
+    router.push('/login');
+  };
+
   const isActive = (href: string) => pathname === href
 
   return (
@@ -95,22 +108,26 @@ export default function DashboardLayout({
                   </Link>
                 </SidebarMenuItem>
               ))}
-              <SidebarMenuItem>
-                 <Badge variant="outline" className="w-full justify-start group-data-[collapsible=icon]:hidden mt-4 mb-2 -ml-1">Admin</Badge>
-              </SidebarMenuItem>
-               {adminNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} legacyBehavior passHref>
-                    <SidebarMenuButton
-                      isActive={isActive(item.href)}
-                      tooltip={{ children: item.label }}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
+              {userRole === 'admin' && (
+                <>
+                  <SidebarMenuItem>
+                    <Badge variant="outline" className="w-full justify-start group-data-[collapsible=icon]:hidden mt-4 mb-2 -ml-1">Admin</Badge>
+                  </SidebarMenuItem>
+                  {adminNavItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <Link href={item.href} legacyBehavior passHref>
+                        <SidebarMenuButton
+                          isActive={isActive(item.href)}
+                          tooltip={{ children: item.label }}
+                        >
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
+                      </Link>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              )}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
@@ -119,11 +136,11 @@ export default function DashboardLayout({
                     <div className="flex items-center gap-3 p-2 rounded-md hover:bg-sidebar-accent cursor-pointer group-data-[collapsible=icon]:justify-center">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src="https://picsum.photos/100/100" data-ai-hint="person avatar" alt="@shadcn" />
-                        <AvatarFallback>KA</AvatarFallback>
+                        <AvatarFallback>{userRole === 'admin' ? 'AD' : 'US'}</AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                         <span className="text-sm font-medium text-sidebar-foreground">Kofi Adu</span>
-                         <span className="text-xs text-sidebar-foreground/70">Admin</span>
+                         <span className="text-sm font-medium text-sidebar-foreground">{userRole === 'admin' ? 'Admin User' : 'Regular User'}</span>
+                         <span className="text-xs text-sidebar-foreground/70">{userRole === 'admin' ? 'Admin' : 'User'}</span>
                       </div>
                     </div>
                 </DropdownMenuTrigger>
@@ -137,8 +154,8 @@ export default function DashboardLayout({
                     <Link href="/settings" className="flex items-center w-full"><Settings className="mr-2 h-4 w-4" /> Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Link href="/login" className="flex items-center w-full"><LogOut className="mr-2 h-4 w-4" /> Logout</Link>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
