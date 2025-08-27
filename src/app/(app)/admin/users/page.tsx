@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoreVertical, MessageSquare, CheckCircle, XCircle } from "lucide-react";
+import { MoreVertical, MessageSquare, CheckCircle, XCircle, Check, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const summaryCards = [
@@ -157,14 +157,53 @@ export default function UsersDirectoryPage() {
                         </Card>
                          <Card>
                             <CardHeader>
-                                <CardTitle>Bulk User Actions</CardTitle>
+                                <CardTitle>Pending Requests</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <p className="text-sm text-muted-foreground">Select users from the list to perform bulk actions.</p>
-                                <div className="flex gap-2">
-                                    <Button variant="outline">Notify</Button>
-                                    <Button variant="outline">Approve KYC</Button>
-                                </div>
+                                <Tabs defaultValue="withdrawals">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+                                        <TabsTrigger value="joins">Join Requests</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="withdrawals" className="pt-4">
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="font-medium">Yaw Mensah</p>
+                                                    <p className="text-sm text-muted-foreground">$1,000 for emergency</p>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
+                                                </div>
+                                            </div>
+                                             <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="font-medium">Adwoa Boateng</p>
+                                                    <p className="text-sm text-muted-foreground">$250 for school fees</p>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+                                    <TabsContent value="joins" className="pt-4">
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="font-medium">Abena Yeboah</p>
+                                                    <p className="text-sm text-muted-foreground">Wants to join Accra Group</p>
+                                                </div>
+                                                <div className="flex gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
                             </CardContent>
                         </Card>
                     </div>
