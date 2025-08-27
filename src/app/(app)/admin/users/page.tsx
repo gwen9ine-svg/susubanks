@@ -88,33 +88,17 @@ export default function UsersDirectoryPage() {
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
                         <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <Avatar className="h-16 w-16">
-                                        <AvatarImage src="https://picsum.photos/100/100?a" data-ai-hint="person avatar"/>
-                                        <AvatarFallback>KA</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <CardTitle>Kofi Adu</CardTitle>
-                                        <CardDescription>ID: U-12345 | Joined: Jan 15, 2023</CardDescription>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="icon"><MessageSquare className="h-4 w-4"/></Button>
-                                    <Button variant="destructive" size="sm">Suspend</Button>
-                                    <Button size="sm">Verify KYC</Button>
-                                </div>
-                            </div>
+                            <CardTitle>User Details</CardTitle>
+                            <CardDescription>View and manage user information.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Tabs defaultValue="overview">
+                            <Tabs defaultValue="transactions">
                                 <TabsList>
-                                    <TabsTrigger value="overview">Overview</TabsTrigger>
                                     <TabsTrigger value="transactions">Transactions</TabsTrigger>
                                     <TabsTrigger value="loans">Loans</TabsTrigger>
                                     <TabsTrigger value="settings">Settings</TabsTrigger>
                                 </TabsList>
-                                <TabsContent value="overview" className="pt-4">
+                                <TabsContent value="transactions" className="pt-4">
                                      <Table>
                                         <TableHeader>
                                             <TableRow>
