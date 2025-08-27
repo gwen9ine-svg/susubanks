@@ -79,8 +79,16 @@ export default function ContributionsPage() {
                 <Input id="amount" type="number" placeholder="250.00" />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="reference">Reference / ID</Label>
-                <Input id="reference" placeholder="Optional transaction ID" />
+                <Label htmlFor="group-name">Group Name</Label>
+                <Select>
+                  <SelectTrigger id="group-name">
+                    <SelectValue placeholder="Select group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="accra">Susu Collective Accra</SelectItem>
+                    <SelectItem value="kumasi">Susu Collective Kumasi</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="note">Note</Label>
