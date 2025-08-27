@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -27,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { addDocument, getCollection } from '@/services/firestore';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
+import { Check, X } from 'lucide-react';
 
 type Transaction = {
   id: string;
@@ -296,6 +298,7 @@ export default function ContributionsPage() {
                         <TableHead>Type</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -306,6 +309,12 @@ export default function ContributionsPage() {
                         <TableCell><Badge variant="outline" className="border-primary/50 text-primary">{item.type}</Badge></TableCell>
                         <TableCell>{item.amount}</TableCell>
                         <TableCell>{item.date}</TableCell>
+                        <TableCell>
+                            <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
+                            </div>
+                        </TableCell>
                     </TableRow>
                     ))}
                 </TableBody>
