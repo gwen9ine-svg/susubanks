@@ -50,7 +50,6 @@ const navItems = [
   { href: '/contributions', icon: HandCoins, label: 'Contributions' },
   { href: '/withdrawals', icon: Landmark, label: 'Withdrawals' },
   { href: '/transactions', icon: Receipt, label: 'Transactions' },
-  { href: '/ai-savings-tool', icon: BrainCircuit, label: 'AI Savings Tool' },
 ]
 
 const adminNavItems = [
