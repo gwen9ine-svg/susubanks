@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import { useEffect, useState } from "react";
@@ -22,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getCollection, seedDatabase } from "@/services/firestore";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { format, setDate, addMonths, isAfter } from 'date-fns';
 
 type Member = {
   id: string;
@@ -65,7 +65,6 @@ const getStatusColor = (status: string) => {
       return "bg-gray-500";
   }
 };
-
 
 export default function DashboardPage() {
   const [members, setMembers] = useState<Member[]>([]);
@@ -126,10 +125,22 @@ export default function DashboardPage() {
     router.refresh();
   };
 
+  const getNextDueDate = () => {
+    const today = new Date();
+    const dueDate = 25;
+    let nextDueDate = setDate(today, dueDate);
+
+    if (isAfter(today, nextDueDate)) {
+      nextDueDate = addMonths(nextDueDate, 1);
+    }
+    
+    return format(nextDueDate, 'MMMM d, yyyy');
+  }
+
   const summaryCards = [
     { title: "Group Balance", value: formatCurrency(summary.groupBalance), description: "Total funds in the collective" },
     { title: "My Contributions", value: formatCurrency(summary.myContributions), description: "Your total contributions" },
-    { title: "Upcoming Payment", value: "GH₵250.00", description: "Due on July 25, 2024" }, // Static for now
+    { title: "Upcoming Payment", value: "GH₵250.00", description: `Due on ${getNextDueDate()}` },
   ];
 
   const metricCards = [
@@ -162,7 +173,7 @@ export default function DashboardPage() {
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            </CardHeader>
+            </Header>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>
             </CardContent>
