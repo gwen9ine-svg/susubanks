@@ -127,7 +127,7 @@ export default function DashboardPage() {
   const handleSeed = async () => {
     setLoading(true);
     await seedDatabase();
-    router.refresh(); // This will re-trigger the useEffect to fetch data
+    window.location.reload();
   };
 
   const getNextDueDate = () => {
