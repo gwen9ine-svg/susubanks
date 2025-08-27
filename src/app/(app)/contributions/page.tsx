@@ -48,7 +48,7 @@ const parseAmount = (amount: string): number => {
 }
 
 const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', currencyDisplay: 'symbol' }).format(value);
 }
 
 export default function ContributionsPage() {
