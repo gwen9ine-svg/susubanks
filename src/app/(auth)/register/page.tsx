@@ -74,6 +74,16 @@ export default function RegisterPage() {
             </Select>
           </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="you@example.com" required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" type="tel" placeholder="+233 12 345 6789" required />
+            </div>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="address">Residential Address</Label>
           <Input id="address" placeholder="123 Main St, Anytown, USA" required />
