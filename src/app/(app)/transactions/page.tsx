@@ -22,12 +22,25 @@ import { Download } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getCollection } from "@/services/firestore";
 
-const summaryCards = [
-  { title: "Total Volume", value: "GH₵25,345.00", count: "312 entries" },
-  { title: "Contributions", value: "GH₵18,750.00", count: "250 entries" },
-  { title: "Withdrawals", value: "GH₵6,595.00", count: "48 entries" },
-  { title: "Fees & Adjustments", value: "GH₵0.00", count: "14 entries" },
-];
+type Transaction = {
+  id: string;
+  ref: string;
+  member: string;
+  avatar: string;
+  type: 'Contribution' | 'Withdrawal' | string;
+  amount: string;
+  date: string;
+  status: string;
+};
+
+type SummaryData = {
+  totalVolume: number;
+  totalContributions: number;
+  totalWithdrawals: number;
+  contributionEntries: number;
+  withdrawalEntries: number;
+  totalEntries: number;
+};
 
 const getTypeBadge = (type: string) => {
     switch(type) {
@@ -51,19 +64,69 @@ const getStatusBadge = (status: string) => {
     }
 }
 
+const parseAmount = (amount: string): number => {
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
+
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
+}
+
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [summaryData, setSummaryData] = useState<SummaryData>({
+    totalVolume: 0,
+    totalContributions: 0,
+    totalWithdrawals: 0,
+    contributionEntries: 0,
+    withdrawalEntries: 0,
+    totalEntries: 0,
+  });
 
   useEffect(() => {
     async function fetchTransactions() {
       setLoading(true);
       const transactionData = await getCollection('transactions');
-      setTransactions(transactionData);
+      setTransactions(transactionData as Transaction[]);
       setLoading(false);
     }
     fetchTransactions();
   }, []);
+
+  useEffect(() => {
+    if (transactions.length > 0) {
+      const summary = transactions.reduce((acc, tx) => {
+        const amount = parseAmount(tx.amount);
+        acc.totalVolume += amount;
+        acc.totalEntries++;
+
+        if (tx.type === 'Contribution') {
+          acc.totalContributions += amount;
+          acc.contributionEntries++;
+        } else if (tx.type === 'Withdrawal') {
+          acc.totalWithdrawals += amount;
+          acc.withdrawalEntries++;
+        }
+        return acc;
+      }, {
+        totalVolume: 0,
+        totalContributions: 0,
+        totalWithdrawals: 0,
+        contributionEntries: 0,
+        withdrawalEntries: 0,
+        totalEntries: 0,
+      });
+      setSummaryData(summary);
+    }
+  }, [transactions]);
+  
+  const summaryCards = [
+    { title: "Total Volume", value: formatCurrency(summaryData.totalVolume), count: `${summaryData.totalEntries} entries` },
+    { title: "Contributions", value: formatCurrency(summaryData.totalContributions), count: `${summaryData.contributionEntries} entries` },
+    { title: "Withdrawals", value: formatCurrency(summaryData.totalWithdrawals), count: `${summaryData.withdrawalEntries} entries` },
+    { title: "Fees & Adjustments", value: formatCurrency(0), count: "0 entries" },
+  ];
 
   return (
     <div className="space-y-6">
