@@ -1,3 +1,5 @@
+
+'use client';
 import {
   Card,
   CardContent,
@@ -20,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoreVertical, MessageSquare, CheckCircle, XCircle, Check, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect, useState } from "react";
 
 const summaryCards = [
     { title: "Total Members", value: "52" },
@@ -28,7 +31,7 @@ const summaryCards = [
     { title: "Loan Outstanding", value: "GH₵3,200.00" },
 ];
 
-const users = [
+const initialUsers = [
     { name: "Kofi Adu", avatar: "https://picsum.photos/100/100?a", status: "Contributor", id: "U-12345" },
     { name: "Ama Serwaa", avatar: "https://picsum.photos/100/100?b", status: "Member", id: "U-12346" },
     { name: "Yaw Mensah", avatar: "https://picsum.photos/100/100?c", status: "Loan", id: "U-12347" },
@@ -47,6 +50,18 @@ const getStatusBadge = (status: string) => {
 }
 
 export default function UsersDirectoryPage() {
+    const [users, setUsers] = useState(initialUsers);
+    const [loading, setLoading] = useState(false);
+
+    // Simulate fetching users, you can replace this with a real API call
+    useEffect(() => {
+        setLoading(true);
+        setTimeout(() => {
+            setUsers(initialUsers);
+            setLoading(false);
+        }, 1000);
+    }, []);
+
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold">Users Directory</h1>
@@ -70,18 +85,22 @@ export default function UsersDirectoryPage() {
                     </CardHeader>
                     <CardContent className="p-0">
                        <ul className="divide-y">
-                         {users.map(user => (
-                            <li key={user.id} className="p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer">
-                                <div className="flex items-center gap-3">
-                                    <Avatar>
-                                        <AvatarImage src={user.avatar} data-ai-hint="person avatar"/>
-                                        <AvatarFallback>{user.name.substring(0,2)}</AvatarFallback>
-                                    </Avatar>
-                                    <span>{user.name}</span>
-                                </div>
-                                <Badge className={getStatusBadge(user.status)}>{user.status}</Badge>
-                            </li>
-                         ))}
+                         {loading ? (
+                             <li className="p-4 text-center text-muted-foreground">Loading users...</li>
+                         ) : (
+                            users.map(user => (
+                                <li key={user.id} className="p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar>
+                                            <AvatarImage src={user.avatar} data-ai-hint="person avatar"/>
+                                            <AvatarFallback>{user.name.substring(0,2)}</AvatarFallback>
+                                        </Avatar>
+                                        <span>{user.name}</span>
+                                    </div>
+                                    <Badge className={getStatusBadge(user.status)}>{user.status}</Badge>
+                                </li>
+                             ))
+                         )}
                        </ul>
                     </CardContent>
                 </Card>
