@@ -56,6 +56,7 @@ export default function ContributionsPage() {
   const [depositMethod, setDepositMethod] = useState('bank');
   const [contributionHistory, setContributionHistory] = useState<Transaction[]>([]);
   const [allContributions, setAllContributions] = useState<Transaction[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [summaryData, setSummaryData] = useState({
     totalContributions: 0,
@@ -92,6 +93,8 @@ export default function ContributionsPage() {
 
   useEffect(() => {
     fetchContributionData();
+    const role = localStorage.getItem('userRole');
+    setUserRole(role);
   }, []);
 
   const clearForm = () => {
@@ -316,47 +319,49 @@ export default function ContributionsPage() {
         </Card>
       </div>
 
-       <Card>
-        <CardHeader>
-            <CardTitle>All Contributions</CardTitle>
-            <CardDescription>A log of all contributions from every member.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Member</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {allContributions.map((item) => (
-                    <TableRow key={item.id}>
-                        <TableCell>{item.member}</TableCell>
-                        <TableCell><Badge variant="outline" className="border-primary/50 text-primary">{item.type}</Badge></TableCell>
-                        <TableCell>{item.amount}</TableCell>
-                        <TableCell>{item.date}</TableCell>
-                        <TableCell>{getStatusBadge(item.status)}</TableCell>
-                        <TableCell>
-                           {item.status === 'Completed' || item.status === 'Settled' || item.status === 'Rejected' ? (
-                                <Button variant="outline" size="sm" disabled>{item.status}</Button>
-                           ) : (
-                               <div className="flex gap-2">
-                                    <Button onClick={() => handleContributionStatus(item.id, 'Completed')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
-                                    <Button onClick={() => handleContributionStatus(item.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
-                                </div>
-                           )}
-                        </TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-       </Card>
+       {userRole === 'admin' && (
+        <Card>
+            <CardHeader>
+                <CardTitle>All Contributions</CardTitle>
+                <CardDescription>A log of all contributions from every member.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Member</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {allContributions.map((item) => (
+                        <TableRow key={item.id}>
+                            <TableCell>{item.member}</TableCell>
+                            <TableCell><Badge variant="outline" className="border-primary/50 text-primary">{item.type}</Badge></TableCell>
+                            <TableCell>{item.amount}</TableCell>
+                            <TableCell>{item.date}</TableCell>
+                            <TableCell>{getStatusBadge(item.status)}</TableCell>
+                            <TableCell>
+                            {item.status === 'Completed' || item.status === 'Settled' || item.status === 'Rejected' ? (
+                                    <Button variant="outline" size="sm" disabled>{item.status}</Button>
+                            ) : (
+                                <div className="flex gap-2">
+                                        <Button onClick={() => handleContributionStatus(item.id, 'Completed')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Accept</Button>
+                                        <Button onClick={() => handleContributionStatus(item.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
+                                    </div>
+                            )}
+                            </TableCell>
+                        </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+       )}
     </div>
   );
 }
