@@ -96,13 +96,14 @@ export default function DashboardPage() {
         .filter(tx => tx.type === 'Contribution' && tx.email === 'k.adu@example.com')
         .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
 
-      const activeMembers = memberData.filter(m => m.status === 'Active').length;
+      const activeMembersData = memberData.filter(m => m.status === 'Active');
+      const activeMembers = activeMembersData.length;
 
       const loansOutstanding = loanData
         .filter(loan => loan.status === 'Outstanding')
         .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
 
-      setMembers(memberData);
+      setMembers(activeMembersData);
       setSummary({
         groupBalance: totalContributions - totalWithdrawals,
         myContributions,
@@ -135,13 +136,14 @@ export default function DashboardPage() {
         .filter(tx => tx.type === 'Contribution' && tx.email === 'k.adu@example.com')
         .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
 
-      const activeMembers = (memberData as Member[]).filter(m => m.status === 'Active').length;
+      const activeMembersData = (memberData as Member[]).filter(m => m.status === 'Active');
+      const activeMembers = activeMembersData.length;
 
       const loansOutstanding = (loanData as Loan[])
         .filter(loan => loan.status === 'Outstanding')
         .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
 
-      setMembers(memberData as Member[]);
+      setMembers(activeMembersData);
       setSummary({
         groupBalance: totalContributions - totalWithdrawals,
         myContributions,
