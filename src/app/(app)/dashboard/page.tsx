@@ -120,7 +120,35 @@ export default function DashboardPage() {
     await seedDatabase();
     // Re-fetch data after seeding
     const memberData = await getCollection('members');
-    setMembers(memberData as Member[]);
+    const transactionData = await getCollection('transactions');
+    const loanData = await getCollection('loans');
+    
+     const totalContributions = (transactionData as Transaction[])
+        .filter(tx => tx.type === 'Contribution')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      const totalWithdrawals = (transactionData as Transaction[])
+        .filter(tx => tx.type === 'Withdrawal')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+        
+      const myContributions = (transactionData as Transaction[])
+        .filter(tx => tx.type === 'Contribution' && tx.email === 'k.adu@example.com')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      const activeMembers = (memberData as Member[]).filter(m => m.status === 'Active').length;
+
+      const loansOutstanding = (loanData as Loan[])
+        .filter(loan => loan.status === 'Outstanding')
+        .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
+
+      setMembers(memberData as Member[]);
+      setSummary({
+        groupBalance: totalContributions - totalWithdrawals,
+        myContributions,
+        activeMembers,
+        loansOutstanding,
+      });
+
     setLoading(false);
     router.refresh();
   };
