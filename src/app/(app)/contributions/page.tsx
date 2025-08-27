@@ -201,7 +201,7 @@ export default function ContributionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Contributions</h1>
+        <h1 className="text-2xl font-bold">My Contributions</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -285,7 +285,7 @@ export default function ContributionsPage() {
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Contribution History</CardTitle>
+            <CardTitle>My Contribution History</CardTitle>
             <CardDescription>Your recent contributions.</CardDescription>
           </CardHeader>
           <CardContent>
