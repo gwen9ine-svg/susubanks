@@ -103,10 +103,8 @@ export default function DashboardPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Member</TableHead>
-                <TableHead>Role</TableHead>
                 <TableHead>Contributed</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,31 +122,12 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant={member.role === "Admin" ? "default" : "secondary"}>{member.role}</Badge>
-                  </TableCell>
                   <TableCell>{member.contributed}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                        <span className={`h-2 w-2 rounded-full ${getStatusColor(member.status)}`} />
                        {member.status}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem asChild>
-                                <Link href={`/members/${member.id}`}>View Details</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>Message</DropdownMenuItem>
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
