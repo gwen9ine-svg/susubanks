@@ -25,13 +25,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 
 const summaryCards = [
-  { title: "Available Pool", value: "$10,200.00" },
+  { title: "Available Pool", value: "GH₵10,200.00" },
   { title: "Pending Requests", value: "3" },
-  { title: "My Last Withdrawal", value: "$500 on May 15, 2024" },
+  { title: "My Last Withdrawal", value: "GH₵500 on May 15, 2024" },
 ];
 
 const withdrawalHistory = [
-    { desc: "Emergency Withdrawal", member: "Kofi Adu", type: "Withdrawal", amount: "$500.00", date: "May 15, 2024" },
+    { desc: "Emergency Withdrawal", type: "Withdrawal", amount: "GH₵500.00", date: "May 15, 2024" },
 ];
 
 

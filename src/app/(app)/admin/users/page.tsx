@@ -24,8 +24,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const summaryCards = [
     { title: "Total Members", value: "52" },
     { title: "Active Groups", value: "1" },
-    { title: "Monthly Deposits", value: "$8,750.00" },
-    { title: "Loan Outstanding", value: "$3,200.00" },
+    { title: "Monthly Deposits", value: "GH₵8,750.00" },
+    { title: "Loan Outstanding", value: "GH₵3,200.00" },
 ];
 
 const users = [
@@ -111,13 +111,13 @@ export default function UsersDirectoryPage() {
                                         <TableBody>
                                             <TableRow>
                                                 <TableCell>Contribution</TableCell>
-                                                <TableCell>$250.00</TableCell>
+                                                <TableCell>GH₵250.00</TableCell>
                                                 <TableCell>July 1, 2024</TableCell>
                                                 <TableCell><Badge className="bg-green-100 text-green-800">Approved</Badge></TableCell>
                                             </TableRow>
                                             <TableRow>
                                                 <TableCell>Withdrawal</TableCell>
-                                                <TableCell>$500.00</TableCell>
+                                                <TableCell>GH₵500.00</TableCell>
                                                 <TableCell>May 15, 2024</TableCell>
                                                 <TableCell><Badge className="bg-red-100 text-red-800">Rejected</Badge></TableCell>
                                             </TableRow>
@@ -154,7 +154,7 @@ export default function UsersDirectoryPage() {
                                             <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="font-medium">Yaw Mensah</p>
-                                                    <p className="text-sm text-muted-foreground">$1,000 for emergency</p>
+                                                    <p className="text-sm text-muted-foreground">GH₵1,000 for emergency</p>
                                                 </div>
                                                 <div className="flex gap-1">
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
@@ -164,7 +164,7 @@ export default function UsersDirectoryPage() {
                                              <div className="flex items-center justify-between">
                                                 <div>
                                                     <p className="font-medium">Adwoa Boateng</p>
-                                                    <p className="text-sm text-muted-foreground">$250 for school fees</p>
+                                                    <p className="text-sm text-muted-foreground">GH₵250 for school fees</p>
                                                 </div>
                                                 <div className="flex gap-1">
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>

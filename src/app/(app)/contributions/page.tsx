@@ -26,23 +26,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 
 const summaryCards = [
-  { title: "Total Contributions", value: "$8,750.00" },
-  { title: "My Contributions", value: "$2,500.00" },
+  { title: "Total Contributions", value: "GH₵8,750.00" },
+  { title: "My Contributions", value: "GH₵2,500.00" },
   { title: "Next Due", value: "July 25, 2024" },
 ];
 
 const history = [
-    { ref: "CONT-07-2024-A1", amount: "$250.00", status: "Completed", date: "July 1, 2024" },
-    { ref: "CONT-06-2024-A1", amount: "$250.00", status: "Completed", date: "June 1, 2024" },
-    { ref: "CONT-05-2024-A1", amount: "$250.00", status: "Processing", date: "May 1, 2024" },
-    { ref: "CONT-04-2024-A1", amount: "$250.00", status: "Completed", date: "April 1, 2024" },
+    { ref: "CONT-07-2024-A1", amount: "GH₵250.00", status: "Completed", date: "July 1, 2024" },
+    { ref: "CONT-06-2024-A1", amount: "GH₵250.00", status: "Completed", date: "June 1, 2024" },
+    { ref: "CONT-05-2024-A1", amount: "GH₵250.00", status: "Processing", date: "May 1, 2024" },
+    { ref: "CONT-04-2024-A1", amount: "GH₵250.00", status: "Completed", date: "April 1, 2024" },
 ];
 
 const allContributions = [
-    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "$250.00", date: "July 1, 2024" },
-    { desc: "Contribution", member: "Ama Serwaa", type: "Contribution", amount: "$250.00", date: "July 1, 2024" },
-    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "$250.00", date: "June 1, 2024" },
-    { desc: "Contribution", member: "Yaw Mensah", type: "Contribution", amount: "$250.00", date: "June 1, 2024" },
+    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024" },
+    { desc: "Contribution", member: "Ama Serwaa", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024" },
+    { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024" },
+    { desc: "Contribution", member: "Yaw Mensah", type: "Contribution", amount: "GH₵250.00", date: "June 1, 2024" },
 ];
 
 export default function ContributionsPage() {

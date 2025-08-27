@@ -4,15 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { MessageSquare, PlusCircle, Phone, Mail, History } from "lucide-react";
 
 const metricCards = [
-  { title: "Total Saved", value: "$2,500.00" },
-  { title: "Loans Outstanding", value: "$0.00" },
+  { title: "Total Saved", value: "GH₵2,500.00" },
+  { title: "Loans Outstanding", value: "GH₵0.00" },
   { title: "Last Contribution", value: "July 1, 2024" },
   { title: "Missed Payments", value: "0" },
 ];
 
 const recentActivity = [
-    { action: "Contribution added", details: "$250.00 for Cycle 10", time: "2 days ago" },
-    { action: "Withdrawal approved", details: "$500.00 for personal use", time: "1 month ago" },
+    { action: "Contribution added", details: "GH₵250.00 for Cycle 10", time: "2 days ago" },
+    { action: "Withdrawal approved", details: "GH₵500.00 for personal use", time: "1 month ago" },
     { action: "Profile updated", details: "Changed phone number", time: "3 months ago" },
 ];
 

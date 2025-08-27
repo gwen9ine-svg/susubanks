@@ -26,17 +26,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const summaryCards = [
-    { title: "Total Deposits", value: "$18,750.00" },
-    { title: "Total Withdrawals", value: "$6,595.00" },
+    { title: "Total Deposits", value: "GH₵18,750.00" },
+    { title: "Total Withdrawals", value: "GH₵6,595.00" },
     { title: "Pending Reviews", value: "5" },
     { title: "Disputes", value: "1" },
 ];
 
 const transactions = [
-    { time: "10:05 AM", type: "Deposit", member: "Kofi Adu", ref: "CONT-07-24-A1", amount: "$250.00", status: "Approved" },
-    { time: "11:30 AM", type: "Withdrawal", member: "Yaw Mensah", ref: "WDR-07-24-C3", amount: "$1,000.00", status: "Pending" },
-    { time: "02:15 PM", type: "Deposit", member: "Ama Serwaa", ref: "CONT-07-24-B2", amount: "$250.00", status: "Approved" },
-    { time: "04:00 PM", type: "Dispute", member: "Adwoa Boateng", ref: "DIS-07-24-D4", amount: "$50.00", status: "Rejected" },
+    { time: "10:05 AM", type: "Deposit", member: "Kofi Adu", ref: "CONT-07-24-A1", amount: "GH₵250.00", status: "Approved" },
+    { time: "11:30 AM", type: "Withdrawal", member: "Yaw Mensah", ref: "WDR-07-24-C3", amount: "GH₵1,000.00", status: "Pending" },
+    { time: "02:15 PM", type: "Deposit", member: "Ama Serwaa", ref: "CONT-07-24-B2", amount: "GH₵250.00", status: "Approved" },
+    { time: "04:00 PM", type: "Dispute", member: "Adwoa Boateng", ref: "DIS-07-24-D4", amount: "GH₵50.00", status: "Rejected" },
 ];
 
 const getTypeBadge = (type: string) => {

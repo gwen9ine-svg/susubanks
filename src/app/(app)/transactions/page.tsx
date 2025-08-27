@@ -21,16 +21,16 @@ import { Download, Copy, History } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const summaryCards = [
-  { title: "Total Volume", value: "$25,345.00", count: "312 entries" },
-  { title: "Contributions", value: "$18,750.00", count: "250 entries" },
-  { title: "Withdrawals", value: "$6,595.00", count: "48 entries" },
-  { title: "Fees & Adjustments", value: "$0.00", count: "14 entries" },
+  { title: "Total Volume", value: "GH₵25,345.00", count: "312 entries" },
+  { title: "Contributions", value: "GH₵18,750.00", count: "250 entries" },
+  { title: "Withdrawals", value: "GH₵6,595.00", count: "48 entries" },
+  { title: "Fees & Adjustments", value: "GH₵0.00", count: "14 entries" },
 ];
 
 const transactions = [
-    { ref: "CONT-07-2024-A1", member: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", type: "Contribution", amount: "$250.00", date: "July 1, 2024", status: "Settled" },
-    { ref: "WDR-07-2024-C3", member: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", type: "Withdrawal", amount: "$1,000.00", date: "July 2, 2024", status: "Pending" },
-    { ref: "CONT-07-2024-B2", member: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", type: "Contribution", amount: "$250.00", date: "July 1, 2024", status: "Settled" },
+    { ref: "CONT-07-2024-A1", member: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Settled" },
+    { ref: "WDR-07-2024-C3", member: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", type: "Withdrawal", amount: "GH₵1,000.00", date: "July 2, 2024", status: "Pending" },
+    { ref: "CONT-07-2024-B2", member: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Settled" },
 ];
 
 const getTypeBadge = (type: string) => {

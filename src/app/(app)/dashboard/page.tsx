@@ -26,23 +26,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const summaryCards = [
-  { title: "Group Balance", value: "$12,500.00", description: "Total funds in the collective" },
-  { title: "My Contributions", value: "$2,500.00", description: "Your total contributions" },
-  { title: "Upcoming Payment", value: "$250.00", description: "Due on July 25, 2024" },
+  { title: "Group Balance", value: "GH₵12,500.00", description: "Total funds in the collective" },
+  { title: "My Contributions", value: "GH₵2,500.00", description: "Your total contributions" },
+  { title: "Upcoming Payment", value: "GH₵250.00", description: "Due on July 25, 2024" },
 ];
 
 const metricCards = [
     { title: "Active Members", value: "50" },
-    { title: "Loans Outstanding", value: "$3,200.00" },
-    { title: "On-time Rate", value: "98.5%" },
+    { title: "Loans Outstanding", value: "GH₵3,200.00" },
 ]
 
 const members = [
-  { id: '1', name: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", role: "Admin", contributed: "$2,500", status: "Active" },
-  { id: '2', name: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", role: "Member", contributed: "$1,750", status: "Active" },
-  { id: '3', name: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", role: "Member", contributed: "$2,000", status: "On Leave" },
-  { id: '4', name: "Adwoa Boateng", email: "a.boateng@example.com", avatar: "https://picsum.photos/100/100?d", role: "Member", contributed: "$2,200", status: "Active" },
-  { id: '5', name: "Kwame Nkrumah", email: "k.nkrumah@example.com", avatar: "https://picsum.photos/100/100?e", role: "Member", contributed: "$1,500", status: "Suspended" },
+  { id: '1', name: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", role: "Admin", contributed: "GH₵2,500", status: "Active" },
+  { id: '2', name: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", role: "Member", contributed: "GH₵1,750", status: "Active" },
+  { id: '3', name: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", role: "Member", contributed: "GH₵2,000", status: "On Leave" },
+  { id: '4', name: "Adwoa Boateng", email: "a.boateng@example.com", avatar: "https://picsum.photos/100/100?d", role: "Member", contributed: "GH₵2,200", status: "Active" },
+  { id: '5', name: "Kwame Nkrumah", email: "k.nkrumah@example.com", avatar: "https://picsum.photos/100/100?e", role: "Member", contributed: "GH₵1,500", status: "Suspended" },
 ];
 
 const getStatusColor = (status: string) => {
@@ -80,7 +79,7 @@ export default function DashboardPage() {
         ))}
       </div>
       
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {metricCards.map((card, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
