@@ -48,13 +48,6 @@ const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
 }
 
-const history = [
-    { ref: "CONT-07-2024-A1", amount: "GH₵250.00", status: "Completed", date: "July 1, 2024" },
-    { ref: "CONT-06-2024-A1", amount: "GH₵250.00", status: "Completed", date: "June 1, 2024" },
-    { ref: "CONT-05-2024-A1", amount: "GH₵250.00", status: "Processing", date: "May 1, 2024" },
-    { ref: "CONT-04-2024-A1", amount: "GH₵250.00", status: "Completed", date: "April 1, 2024" },
-];
-
 const allContributions = [
     { desc: "Contribution", member: "Kofi Adu", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024" },
     { desc: "Contribution", member: "Ama Serwaa", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024" },
@@ -65,6 +58,7 @@ const allContributions = [
 export default function ContributionsPage() {
   const { toast } = useToast();
   const [depositMethod, setDepositMethod] = useState('bank');
+  const [contributionHistory, setContributionHistory] = useState<Transaction[]>([]);
   const [summaryData, setSummaryData] = useState({
     totalContributions: 0,
     myContributions: 0,
@@ -85,11 +79,15 @@ export default function ContributionsPage() {
     
     const totalContributions = contributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
     
+    // Hardcoded user, replace with actual logged in user in a real app
     const myContributions = contributions
-      .filter(tx => tx.email === 'k.adu@example.com') // Hardcoded user
-      .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+      .filter(tx => tx.email === 'user@example.com' || tx.email === 'k.adu@example.com') 
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    setSummaryData({ totalContributions, myContributions });
+    const myContributionTotal = myContributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+      
+    setContributionHistory(myContributions);
+    setSummaryData({ totalContributions, myContributions: myContributionTotal });
   }
 
   useEffect(() => {
@@ -251,6 +249,7 @@ export default function ContributionsPage() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Contribution History</CardTitle>
+            <CardDescription>Your recent contributions.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -263,14 +262,20 @@ export default function ContributionsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {history.map((item, i) => (
-                    <TableRow key={i}>
-                        <TableCell className="font-medium">{item.ref}</TableCell>
-                        <TableCell>{item.amount}</TableCell>
-                        <TableCell><Badge variant={item.status === 'Completed' ? 'default' : 'secondary'} className={item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>{item.status}</Badge></TableCell>
-                        <TableCell>{item.date}</TableCell>
-                    </TableRow>
-                    ))}
+                    {contributionHistory.length > 0 ? (
+                      contributionHistory.map((item) => (
+                      <TableRow key={item.id}>
+                          <TableCell className="font-medium">{item.ref}</TableCell>
+                          <TableCell>{item.amount}</TableCell>
+                          <TableCell><Badge variant={item.status === 'Completed' || item.status === 'Settled' ? 'default' : 'secondary'} className={item.status === 'Completed' || item.status === 'Settled' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>{item.status}</Badge></TableCell>
+                          <TableCell>{item.date}</TableCell>
+                      </TableRow>
+                      ))
+                    ) : (
+                       <TableRow>
+                          <TableCell colSpan={4} className="text-center">No contribution history yet.</TableCell>
+                       </TableRow>
+                    )}
                 </TableBody>
             </Table>
           </CardContent>
