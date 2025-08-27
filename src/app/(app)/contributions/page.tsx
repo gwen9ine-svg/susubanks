@@ -97,7 +97,7 @@ export default function ContributionsPage() {
           </CardContent>
           <CardFooter className="flex-col items-start gap-4">
             <p className="text-xs text-muted-foreground">Your contribution will be marked as 'Processing' until confirmed by an admin.</p>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
                 <Button>Submit Contribution</Button>
                 <Button variant="ghost">Cancel</Button>
             </div>
