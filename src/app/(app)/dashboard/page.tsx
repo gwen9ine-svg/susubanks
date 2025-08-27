@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -13,17 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
-import Link from "next/link";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { getCollection } from "@/services/firestore";
 
 const summaryCards = [
   { title: "Group Balance", value: "GH₵12,500.00", description: "Total funds in the collective" },
@@ -35,14 +27,6 @@ const metricCards = [
     { title: "Active Members", value: "50" },
     { title: "Loans Outstanding", value: "GH₵3,200.00" },
 ]
-
-const members = [
-  { id: '1', name: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", role: "Admin", contributed: "GH₵2,500", status: "Active" },
-  { id: '2', name: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", role: "Member", contributed: "GH₵1,750", status: "Active" },
-  { id: '3', name: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", role: "Member", contributed: "GH₵2,000", status: "On Leave" },
-  { id: '4', name: "Adwoa Boateng", email: "a.boateng@example.com", avatar: "https://picsum.photos/100/100?d", role: "Member", contributed: "GH₵2,200", status: "Active" },
-  { id: '5', name: "Kwame Nkrumah", email: "k.nkrumah@example.com", avatar: "https://picsum.photos/100/100?e", role: "Member", contributed: "GH₵1,500", status: "Suspended" },
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -58,7 +42,9 @@ const getStatusColor = (status: string) => {
 };
 
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const members = await getCollection('members');
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -107,7 +93,7 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member) => (
+              {members.length > 0 ? members.map((member: any) => (
                 <TableRow key={member.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -129,7 +115,11 @@ export default function DashboardPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">No members found. Please seed the database.</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
