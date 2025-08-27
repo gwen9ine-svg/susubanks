@@ -16,7 +16,7 @@ const recentActivity = [
     { action: "Profile updated", details: "Changed phone number", time: "3 months ago" },
 ];
 
-export default function MemberOverviewPage({ params }: { params: { id: string } }) {
+export default function MemberOverviewPage({ params: { id } }: { params: { id: string } }) {
   return (
     <div className="space-y-6">
       <Card>
@@ -24,7 +24,7 @@ export default function MemberOverviewPage({ params }: { params: { id: string } 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={`https://picsum.photos/100/100?a=${params.id}`} data-ai-hint="person avatar" />
+                <AvatarImage src={`https://picsum.photos/100/100?a=${id}`} data-ai-hint="person avatar" />
                 <AvatarFallback>KA</AvatarFallback>
               </Avatar>
               <div>
