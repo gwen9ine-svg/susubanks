@@ -47,12 +47,6 @@ export default function ContributionsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Contributions</h1>
-        <div className="flex items-center gap-2 mt-2 sm:mt-0">
-          <Button variant="outline">New Contribution</Button>
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
