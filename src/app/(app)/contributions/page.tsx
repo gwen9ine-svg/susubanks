@@ -1,13 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardFooter
 } from "@/components/ui/card";
 import {
@@ -24,12 +23,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getCollection } from '@/services/firestore';
 
-const summaryCards = [
-  { title: "Total Contributions", value: "GH₵8,750.00" },
-  { title: "My Contributions", value: "GH₵2,500.00" },
-  { title: "Next Due", value: "July 25, 2024" },
-];
+type Transaction = {
+  id: string;
+  ref: string;
+  member: string;
+  avatar: string;
+  type: 'Contribution' | 'Withdrawal' | string;
+  amount: string;
+  date: string;
+  status: string;
+  email?: string;
+};
+
+const parseAmount = (amount: string): number => {
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
+
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS' }).format(value);
+}
 
 const history = [
     { ref: "CONT-07-2024-A1", amount: "GH₵250.00", status: "Completed", date: "July 1, 2024" },
@@ -47,6 +61,34 @@ const allContributions = [
 
 export default function ContributionsPage() {
   const [depositMethod, setDepositMethod] = useState('bank');
+  const [summaryData, setSummaryData] = useState({
+    totalContributions: 0,
+    myContributions: 0,
+  });
+
+  useEffect(() => {
+    async function fetchData() {
+      const transactionData = await getCollection('transactions') as Transaction[];
+      const contributions = transactionData.filter(tx => tx.type === 'Contribution');
+      
+      const totalContributions = contributions.reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+      
+      // NOTE: Hardcoding 'my' contributions to a specific user for now.
+      // In a real app, this would be based on the logged-in user's ID.
+      const myContributions = contributions
+        .filter(tx => tx.email === 'k.adu@example.com')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      setSummaryData({ totalContributions, myContributions });
+    }
+    fetchData();
+  }, []);
+
+  const summaryCards = [
+    { title: "Total Contributions", value: formatCurrency(summaryData.totalContributions) },
+    { title: "My Contributions", value: formatCurrency(summaryData.myContributions) },
+    { title: "Next Due", value: "July 25, 2024" }, // This remains static for now
+  ];
 
   return (
     <div className="space-y-6">
