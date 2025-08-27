@@ -163,7 +163,7 @@ export default function DashboardPage() {
     }
     
     return format(nextDueDate, 'MMMM d, yyyy');
-  }
+  };
 
   const summaryCards = [
     { title: "Group Balance", value: formatCurrency(summary.groupBalance), description: "Total funds in the collective" },
