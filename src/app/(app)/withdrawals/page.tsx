@@ -32,8 +32,6 @@ const summaryCards = [
 
 const withdrawalHistory = [
     { desc: "Emergency Withdrawal", member: "Kofi Adu", type: "Withdrawal", amount: "$500.00", date: "May 15, 2024" },
-    { desc: "Loan Repayment", member: "Ama Serwaa", type: "Loan", amount: "$1,200.00", date: "April 20, 2024" },
-    { desc: "Personal Withdrawal", member: "Yaw Mensah", type: "Withdrawal", amount: "$300.00", date: "March 10, 2024" },
 ];
 
 
@@ -127,14 +125,13 @@ export default function WithdrawalsPage() {
 
          <Card className="md:col-span-1">
             <CardHeader>
-                <CardTitle>Withdrawal History</CardTitle>
+                <CardTitle>My Withdrawal History</CardTitle>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Description</TableHead>
-                            <TableHead>Member</TableHead>
                             <TableHead>Type</TableHead>
                             <TableHead>Amount</TableHead>
                             <TableHead>Date</TableHead>
@@ -144,7 +141,6 @@ export default function WithdrawalsPage() {
                         {withdrawalHistory.map((item, i) => (
                         <TableRow key={i}>
                             <TableCell className="font-medium">{item.desc}</TableCell>
-                            <TableCell>{item.member}</TableCell>
                             <TableCell><Badge variant="outline" className="border-accent text-accent">{item.type}</Badge></TableCell>
                             <TableCell>{item.amount}</TableCell>
                             <TableCell>{item.date}</TableCell>
