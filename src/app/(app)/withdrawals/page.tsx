@@ -1,3 +1,7 @@
+
+'use client';
+
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -34,6 +38,8 @@ const withdrawalHistory = [
 
 
 export default function WithdrawalsPage() {
+  const [withdrawalMethod, setWithdrawalMethod] = useState('bank');
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -64,17 +70,6 @@ export default function WithdrawalsPage() {
                 <Input id="amount" type="number" placeholder="500.00" />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="destination">Destination</Label>
-                 <Select>
-                    <SelectTrigger id="destination"><SelectValue placeholder="Select account" /></SelectTrigger>
-                    <SelectContent><SelectItem value="primary">Primary Account</SelectItem><SelectItem value="secondary">Backup Account</SelectItem></SelectContent>
-                </Select>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="reason">Reason</Label>
-                <Textarea id="reason" placeholder="Reason for withdrawal (e.g., emergency, project)" />
-            </div>
-             <div className="space-y-2">
                 <Label htmlFor="group-name">Group Name</Label>
                 <Select>
                   <SelectTrigger id="group-name">
@@ -85,6 +80,40 @@ export default function WithdrawalsPage() {
                     <SelectItem value="kumasi">Susu Collective Kumasi</SelectItem>
                   </SelectContent>
                 </Select>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="destination">Destination</Label>
+                 <Select onValueChange={setWithdrawalMethod} defaultValue="bank">
+                    <SelectTrigger id="destination"><SelectValue placeholder="Select account" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="bank">Bank Account</SelectItem>
+                        <SelectItem value="momo">Momo</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {withdrawalMethod === 'bank' && (
+              <div className="space-y-4 rounded-md border p-4">
+                 <div className="space-y-2">
+                  <Label htmlFor="bank-name">Bank Name</Label>
+                  <Input id="bank-name" placeholder="Enter bank name" />
+                </div>
+                 <div className="space-y-2">
+                  <Label htmlFor="account-number">Account Number</Label>
+                  <Input id="account-number" placeholder="Enter account number" />
+                </div>
+              </div>
+            )}
+            {withdrawalMethod === 'momo' && (
+              <div className="space-y-2 rounded-md border p-4">
+                 <Label htmlFor="momo-number">Momo Number</Label>
+                  <Input id="momo-number" placeholder="Enter momo number" />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+                <Label htmlFor="reason">Reason</Label>
+                <Textarea id="reason" placeholder="Reason for withdrawal (e.g., emergency, project)" />
             </div>
           </CardContent>
           <CardFooter className="flex-col items-start gap-4">
