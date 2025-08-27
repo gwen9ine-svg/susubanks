@@ -49,7 +49,7 @@ import React, { useEffect, useState } from 'react'
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Dashboard' },
-  { href: '/contributions', icon: HandCoins, label: 'Contributions' },
+  { href: '/contributions', icon: HandCoins, label: 'My Contributions' },
   { href: '/withdrawals', icon: Landmark, label: 'Withdrawals' },
   { href: '/transactions', icon: Receipt, label: 'Transactions' },
 ]
