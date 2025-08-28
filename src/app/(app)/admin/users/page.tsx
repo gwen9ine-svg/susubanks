@@ -23,7 +23,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MoreVertical, MessageSquare, CheckCircle, XCircle, Check, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
-import { getCollection } from "@/services/firestore";
+import { addDocument, getCollection } from "@/services/firestore";
+import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 type Member = {
   id: string;
@@ -75,35 +77,83 @@ export default function UsersDirectoryPage() {
         { title: "Monthly Deposits", value: formatCurrency(0) },
         { title: "Loan Outstanding", value: formatCurrency(0) },
     ]);
+    const { toast } = useToast();
+    const [newMemberName, setNewMemberName] = useState('');
+    const [newMemberPhone, setNewMemberPhone] = useState('');
+    const [newMemberRole, setNewMemberRole] = useState('');
 
+
+    async function fetchData() {
+      setLoading(true);
+      const memberData = await getCollection('members') as Member[];
+      const transactionData = await getCollection('transactions') as Transaction[];
+      const loanData = await getCollection('loans') as Loan[];
+
+      const totalMembers = memberData.length;
+      const monthlyDeposits = transactionData
+        .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+      const loansOutstanding = loanData
+        .filter(loan => loan.status === 'Outstanding')
+        .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
+
+      setSummaryCards([
+        { title: "Total Members", value: totalMembers.toString() },
+        { title: "Active Groups", value: "1" },
+        { title: "Monthly Deposits", value: formatCurrency(monthlyDeposits) },
+        { title: "Loan Outstanding", value: formatCurrency(loansOutstanding) },
+      ]);
+
+      setUsers(memberData);
+      setLoading(false);
+    }
+    
     useEffect(() => {
-      async function fetchData() {
-        setLoading(true);
-        const memberData = await getCollection('members') as Member[];
-        const transactionData = await getCollection('transactions') as Transaction[];
-        const loanData = await getCollection('loans') as Loan[];
-
-        const totalMembers = memberData.length;
-        const monthlyDeposits = transactionData
-          .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
-          .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-
-        const loansOutstanding = loanData
-          .filter(loan => loan.status === 'Outstanding')
-          .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
-
-        setSummaryCards([
-          { title: "Total Members", value: totalMembers.toString() },
-          { title: "Active Groups", value: "1" },
-          { title: "Monthly Deposits", value: formatCurrency(monthlyDeposits) },
-          { title: "Loan Outstanding", value: formatCurrency(loansOutstanding) },
-        ]);
-
-        setUsers(memberData);
-        setLoading(false);
-      }
       fetchData();
     }, []);
+
+    const handleAddMember = async () => {
+        if (!newMemberName || !newMemberRole) {
+            toast({
+                title: "Validation Error",
+                description: "Please provide name and role for the new member.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const newMember = {
+            id: uuidv4(),
+            name: newMemberName,
+            email: `${newMemberName.toLowerCase().replace(/\s/g, '.')}@example.com`, // dummy email
+            phone: newMemberPhone,
+            role: newMemberRole,
+            status: "Active",
+            contributed: "GH₵0.00",
+            avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
+            password: "password123", // default password
+        };
+
+        try {
+            await addDocument('members', newMember, newMember.id);
+            toast({
+                title: "Member Added",
+                description: `${newMemberName} has been added to the directory.`,
+            });
+            setNewMemberName('');
+            setNewMemberPhone('');
+            setNewMemberRole('');
+            await fetchData(); // Refresh user list
+        } catch (error) {
+            console.error("Error adding member:", error);
+            toast({
+                title: "Error",
+                description: "Could not add the new member. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -195,10 +245,10 @@ export default function UsersDirectoryPage() {
                                 <CardTitle>Create Member</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <Input placeholder="Full Name" />
-                                <Input placeholder="Phone Number" />
-                                 <Select><SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger><SelectContent><SelectItem value="member">Member</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent></Select>
-                                <Button>Add Member</Button>
+                                <Input placeholder="Full Name" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} />
+                                <Input placeholder="Phone Number" value={newMemberPhone} onChange={(e) => setNewMemberPhone(e.target.value)} />
+                                 <Select onValueChange={setNewMemberRole} value={newMemberRole}><SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger><SelectContent><SelectItem value="Member">Member</SelectItem><SelectItem value="Admin">Admin</SelectItem></SelectContent></Select>
+                                <Button onClick={handleAddMember}>Add Member</Button>
                             </CardContent>
                         </Card>
                          <Card>
