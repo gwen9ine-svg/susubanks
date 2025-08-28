@@ -39,12 +39,7 @@ export async function addDocument(collectionName: string, data: any, id?: string
 
 // Example seed function (you would call this once, perhaps from a script)
 export async function seedDatabase() {
-    const members = [
-      { id: '2', name: "Ama Serwaa", email: "a.serwaa@example.com", avatar: "https://picsum.photos/100/100?b", role: "Member", contributed: "GH₵1,750", status: "Active", password: "password123" },
-      { id: '3', name: "Yaw Mensah", email: "y.mensah@example.com", avatar: "https://picsum.photos/100/100?c", role: "Member", contributed: "GH₵2,000", status: "On Leave", password: "password123" },
-      { id: '4', name: "Adwoa Boateng", email: "a.boateng@example.com", avatar: "https://picsum.photos/100/100?d", role: "Member", contributed: "GH₵2,200", status: "Active", password: "password123" },
-      { id: '5', name: "Kwame Nkrumah", email: "k.nkrumah@example.com", avatar: "https://picsum.photos/100/100?e", role: "Member", contributed: "GH₵1,500", status: "Suspended", password: "password123" },
-    ];
+    const members: any[] = [];
     
     const transactions = [
         { id: 'tx1', ref: "CONT-07-2024-A1", member: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Completed" },
@@ -61,12 +56,14 @@ export async function seedDatabase() {
     try {
         const batch = writeBatch(db);
         
-        console.log('Seeding members collection...');
-        const membersRef = collection(db, 'members');
-        members.forEach((member) => {
-            const docRef = doc(membersRef, member.id);
-            batch.set(docRef, member);
-        });
+        if (members.length > 0) {
+            console.log('Seeding members collection...');
+            const membersRef = collection(db, 'members');
+            members.forEach((member) => {
+                const docRef = doc(membersRef, member.id);
+                batch.set(docRef, member);
+            });
+        }
 
         console.log('Seeding transactions collection...');
         const transactionsRef = collection(db, 'transactions');
