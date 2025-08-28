@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SusuLogo } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { addDocument } from "@/services/firestore";
+import { addDocument, getCollection } from "@/services/firestore";
 import { v4 as uuidv4 } from "uuid";
 
 export default function RegisterPage() {
@@ -36,7 +36,6 @@ export default function RegisterPage() {
   const handleCreateAccount = async () => {
     setIsLoading(true);
 
-    // Basic validation
     if (!fullName || !email || !password || !confirmPassword || !agreed) {
       toast({
         title: "Validation Error",
@@ -56,26 +55,29 @@ export default function RegisterPage() {
       setIsLoading(false);
       return;
     }
-
-    const newMember = {
-        id: uuidv4(),
-        name: fullName,
-        email: email,
-        phone: phone,
-        dob: dob,
-        nationality: nationality,
-        address: address,
-        govIdType: govIdType,
-        idNumber: idNumber,
-        sourceOfFunds: sourceOfFunds,
-        password: password, // In a real app, this should be hashed.
-        role: "Member", // Default role
-        status: "Active", // Default status
-        contributed: "GH₵0.00", // Initial contribution
-        avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
-    };
-
+    
     try {
+        const existingMembers = await getCollection('members');
+        const isFirstUser = existingMembers.length === 0;
+
+        const newMember = {
+            id: uuidv4(),
+            name: fullName,
+            email: email,
+            phone: phone,
+            dob: dob,
+            nationality: nationality,
+            address: address,
+            govIdType: govIdType,
+            idNumber: idNumber,
+            sourceOfFunds: sourceOfFunds,
+            password: password, // In a real app, this should be hashed.
+            role: isFirstUser ? "Admin" : "Member", // First user is Admin
+            status: "Active", // Default status
+            contributed: "GH₵0.00", // Initial contribution
+            avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
+        };
+        
         const result = await addDocument('members', newMember, newMember.id);
         if (result.success) {
             toast({
