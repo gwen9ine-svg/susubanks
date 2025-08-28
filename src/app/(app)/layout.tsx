@@ -125,29 +125,28 @@ export default function DashboardLayout({
                   </Link>
                 </SidebarMenuItem>
               ))}
-              {userRole === 'admin' && (
-                <>
-                  <SidebarMenuItem>
-                    <Badge variant="outline" className="w-full justify-start group-data-[collapsible=icon]:hidden mt-4 mb-2 -ml-1">Admin</Badge>
+              {/* Temp change to allow admin creation */}
+              <>
+                <SidebarMenuItem>
+                  <Badge variant="outline" className="w-full justify-start group-data-[collapsible=icon]:hidden mt-4 mb-2 -ml-1">Admin</Badge>
+                </SidebarMenuItem>
+                {adminNavItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <Link href={item.href} passHref>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.href)}
+                        tooltip={{ children: item.label }}
+                      >
+                          <span>
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </span>
+                      </SidebarMenuButton>
+                    </Link>
                   </SidebarMenuItem>
-                  {adminNavItems.map((item) => (
-                    <SidebarMenuItem key={item.href}>
-                      <Link href={item.href} passHref>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive(item.href)}
-                          tooltip={{ children: item.label }}
-                        >
-                           <span>
-                            <item.icon />
-                            <span>{item.label}</span>
-                          </span>
-                        </SidebarMenuButton>
-                      </Link>
-                    </SidebarMenuItem>
-                  ))}
-                </>
-              )}
+                ))}
+              </>
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
