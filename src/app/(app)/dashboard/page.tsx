@@ -205,29 +205,31 @@ export default function DashboardPage() {
                  <TableRow>
                   <TableCell colSpan={3} className="text-center">Loading members...</TableCell>
                 </TableRow>
-              ) : members.length > 0 ? members.map((member: any) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={member.avatar} data-ai-hint="person avatar" />
-                        <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{member.name}</p>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
+              ) : members.length > 0 ? (
+                members.map((member: any) => (
+                  <TableRow key={member.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={member.avatar} data-ai-hint="person avatar" />
+                          <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{member.name}</p>
+                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{member.contributed}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                       <span className={`h-2 w-2 rounded-full ${getStatusColor(member.status)}`} />
-                       {member.status}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )) : (
+                    </TableCell>
+                    <TableCell>{member.contributed}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                         <span className={`h-2 w-2 rounded-full ${getStatusColor(member.status)}`} />
+                         {member.status}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="text-center space-y-4 py-8">
                     <p>No members found in the database.</p>
