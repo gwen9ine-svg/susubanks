@@ -18,6 +18,7 @@ type Member = {
   email: string;
   avatar: string;
   role: 'Admin' | 'Member' | string;
+  password?: string; // Add password field
   contributed: string;
   status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | string;
 };
@@ -32,9 +33,6 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     setIsLoading(true);
-    // In a real app, you would have a more secure password check.
-    // For this demo, we'll just check the email and a static password.
-    const defaultPassword = 'password';
 
     if (!email || !password) {
       toast({
@@ -50,7 +48,8 @@ export default function LoginPage() {
       const members = await getCollection('members') as Member[];
       const user = members.find(member => member.email.toLowerCase() === email.toLowerCase());
 
-      if (user && password === defaultPassword) {
+      // In a real app, you would have a more secure password check.
+      if (user && user.password === password) {
         // In a real app, you'd use a secure way to manage sessions (e.g., JWT).
         // For this demo, localStorage is used for simplicity.
         localStorage.setItem('userRole', user.role.toLowerCase());
