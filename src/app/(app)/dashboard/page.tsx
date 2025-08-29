@@ -66,6 +66,18 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const getNextDueDate = () => {
+    const today = new Date();
+    const dueDate = 25;
+    let nextDueDate = setDate(today, dueDate);
+
+    if (isAfter(today, nextDueDate)) {
+      nextDueDate = addMonths(nextDueDate, 1);
+    }
+    
+    return format(nextDueDate, 'MMMM d, yyyy');
+};
+
 export default function DashboardPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [summary, setSummary] = useState({
@@ -128,18 +140,6 @@ export default function DashboardPage() {
     setLoading(true);
     await seedDatabase();
     window.location.reload();
-  };
-
-  const getNextDueDate = () => {
-    const today = new Date();
-    const dueDate = 25;
-    let nextDueDate = setDate(today, dueDate);
-
-    if (isAfter(today, nextDueDate)) {
-      nextDueDate = addMonths(nextDueDate, 1);
-    }
-    
-    return format(nextDueDate, 'MMMM d, yyyy');
   };
 
   const summaryCards = [
