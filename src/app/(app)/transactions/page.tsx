@@ -136,9 +136,6 @@ export default function TransactionsPage() {
         <h1 className="text-2xl font-bold">Transactions</h1>
         <div className="flex items-center gap-2 mt-2 sm:mt-0">
           <Button variant="outline">New Transaction</Button>
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
-          </Button>
         </div>
       </div>
       
