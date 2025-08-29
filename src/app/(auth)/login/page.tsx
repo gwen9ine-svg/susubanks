@@ -2,7 +2,7 @@
 'use client';
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SusuLogo } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
-import { getCollection } from "@/services/firestore";
+import { getCollection, seedDatabase } from "@/services/firestore";
 
 type Member = {
   id: string;
@@ -30,6 +30,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkForAdmin = async () => {
+        const members = await getCollection('members');
+        if (members.length === 0) {
+            console.log("No members found, seeding database with default admin.");
+            await seedDatabase();
+        }
+    };
+    checkForAdmin();
+  }, []);
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -82,12 +93,12 @@ export default function LoginPage() {
           <SusuLogo isBank={true} />
         </div>
         <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Securely sign in to your account.</CardDescription>
+        <CardDescription>Securely sign in to your account. The first registered user becomes an admin, or use the default credentials.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email or Username</Label>
-          <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" placeholder="admin@susu.bank" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -96,7 +107,7 @@ export default function LoginPage() {
               Forgot Password?
             </Link>
           </div>
-          <Input id="password" type="password" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input id="password" type="password" placeholder="password123" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">

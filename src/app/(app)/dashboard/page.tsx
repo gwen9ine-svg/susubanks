@@ -1,164 +1,69 @@
+// src/app/(app)/dashboard/page.tsx
 
-'use client'
+"use client"
 
-import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getCollection, seedDatabase } from "@/services/firestore";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { format, setDate, addMonths, isAfter } from 'date-fns';
+import { useState, useEffect } from "react"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 
-type Member = {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  contributed: string;
-  status: 'Active' | 'On Leave' | 'Suspended' | string;
-}
+// ✅ Placeholder summary and metric cards
+const summaryCards = [
+  { title: "Total Members", value: "25", description: "Active members in the group" },
+  { title: "Total Savings", value: "₵12,500", description: "Total contributions" },
+  { title: "Pending Withdrawals", value: "₵1,200", description: "Awaiting approval" },
+]
 
-type Transaction = {
-  id: string;
-  type: 'Contribution' | 'Withdrawal' | string;
-  amount: string;
-  email?: string;
-};
+const metricCards = [
+  { title: "Monthly Savings", value: "₵2,500" },
+  { title: "Approved Withdrawals", value: "₵1,000" },
+]
 
-type Loan = {
-  id: string;
-  amount: string;
-  status: 'Outstanding' | 'Paid' | string;
-}
-
-const parseAmount = (amount: string): number => {
-    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
-}
-
-const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', currencyDisplay: 'symbol' }).format(value);
-}
-
-const getStatusColor = (status: string) => {
+// ✅ Helper for status color
+function getStatusColor(status: string) {
   switch (status) {
     case "Active":
-      return "bg-green-500";
-    case "On Leave":
-      return "bg-yellow-500";
-    case "Suspended":
-      return "bg-red-500";
+      return "bg-green-500"
+    case "Pending":
+      return "bg-yellow-500"
+    case "Inactive":
+      return "bg-gray-400"
     default:
-      return "bg-gray-500";
+      return "bg-gray-200"
   }
-};
+}
 
-const getNextDueDate = () => {
-    const today = new Date();
-    const dueDate = 25;
-    let nextDueDate = setDate(today, dueDate);
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true)
+  const [members, setMembers] = useState<any[]>([])
 
-    if (isAfter(today, nextDueDate)) {
-      nextDueDate = addMonths(nextDueDate, 1);
-    }
-    
-    return format(nextDueDate, 'MMMM d, yyyy');
-};
-
-export default function DashboardPage() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [summary, setSummary] = useState({
-    groupBalance: 0,
-    myContributions: 0,
-    activeMembers: 0,
-    loansOutstanding: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const router = useRouter();
-
+  // ✅ Simulate fetching members
   useEffect(() => {
-    const email = localStorage.getItem('userEmail');
-    setUserEmail(email);
-  }, []);
+    setTimeout(() => {
+      setMembers([
+        { id: 1, name: "Alice Johnson", email: "alice@example.com", avatar: "", contributed: "₵500", status: "Active" },
+        { id: 2, name: "Michael Smith", email: "michael@example.com", avatar: "", contributed: "₵300", status: "Pending" },
+      ])
+      setLoading(false)
+    }, 1500)
+  }, [])
 
-  useEffect(() => {
-    if (!userEmail) return;
-
-    async function fetchData() {
-      setLoading(true);
-      const memberData = await getCollection('members') as Member[];
-      const transactionData = await getCollection('transactions') as Transaction[];
-      const loanData = await getCollection('loans') as Loan[];
-      
-      const totalContributions = transactionData
-        .filter(tx => tx.type === 'Contribution')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-
-      const totalWithdrawals = transactionData
-        .filter(tx => tx.type === 'Withdrawal')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-        
-      const myContributions = transactionData
-        .filter(tx => tx.type === 'Contribution' && tx.email === userEmail)
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-
-      const activeMembersData = memberData.filter(m => m.status === 'Active');
-      const activeMembers = activeMembersData.length;
-
-      const loansOutstanding = loanData
-        .filter(loan => loan.status === 'Outstanding')
-        .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
-
-      setMembers(activeMembersData);
-      setSummary({
-        groupBalance: totalContributions - totalWithdrawals,
-        myContributions,
-        activeMembers,
-        loansOutstanding,
-      });
-
-      setLoading(false);
-    }
-    fetchData();
-  }, [userEmail]);
-
-  const handleSeed = async () => {
-    setLoading(true);
-    await seedDatabase();
-    window.location.reload();
-  };
-
-  const summaryCards = [
-    { title: "Group Balance", value: formatCurrency(summary.groupBalance), description: "Total funds in the collective" },
-    { title: "My Contributions", value: formatCurrency(summary.myContributions), description: "Your total contributions" },
-    { title: "Upcoming Payment", value: "GH₵250.00", description: `Due on ${getNextDueDate()}` },
-  ];
-
-  const metricCards = [
-      { title: "Active Members", value: summary.activeMembers.toString() },
-      { title: "Loans Outstanding", value: formatCurrency(summary.loansOutstanding) },
-  ];
+  // ✅ Simulate seeding database
+  const handleSeed = () => {
+    setMembers([
+      { id: 3, name: "John Doe", email: "john@example.com", avatar: "", contributed: "₵200", status: "Inactive" },
+    ])
+  }
 
   return (
     <div className="space-y-6">
+      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
       </div>
 
+      {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
         {summaryCards.map((card, index) => (
           <Card key={index}>
@@ -172,13 +77,14 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
-      
+
+      {/* Metric Cards */}
       <div className="grid gap-4 md:grid-cols-2">
         {metricCards.map((card, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            </Header>
+            </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>
             </CardContent>
@@ -186,6 +92,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Members Table */}
       <Card>
         <CardHeader>
           <CardTitle>Group Members</CardTitle>
@@ -202,7 +109,7 @@ export default function DashboardPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                 <TableRow>
+                <TableRow>
                   <TableCell colSpan={3} className="text-center">Loading members...</TableCell>
                 </TableRow>
               ) : members.length > 0 ? (
@@ -211,7 +118,7 @@ export default function DashboardPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={member.avatar} data-ai-hint="person avatar" />
+                          <AvatarImage src={member.avatar} />
                           <AvatarFallback>{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -223,8 +130,8 @@ export default function DashboardPage() {
                     <TableCell>{member.contributed}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                         <span className={`h-2 w-2 rounded-full ${getStatusColor(member.status)}`} />
-                         {member.status}
+                        <span className={`h-2 w-2 rounded-full ${getStatusColor(member.status)}`} />
+                        {member.status}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -242,5 +149,5 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

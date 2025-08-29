@@ -39,7 +39,18 @@ export async function addDocument(collectionName: string, data: any, id?: string
 
 // Example seed function (you would call this once, perhaps from a script)
 export async function seedDatabase() {
-    const members: any[] = [];
+    const members = [
+      { 
+        id: 'admin-user', 
+        name: "Admin User", 
+        email: "admin@susu.bank", 
+        avatar: "https://picsum.photos/100/100?d", 
+        role: "Admin",
+        password: "password123",
+        contributed: "GH₵0.00",
+        status: "Active"
+      }
+    ];
     
     const transactions = [
         { id: 'tx1', ref: "CONT-07-2024-A1", member: "Kofi Adu", email: "k.adu@example.com", avatar: "https://picsum.photos/100/100?a", type: "Contribution", amount: "GH₵250.00", date: "July 1, 2024", status: "Completed" },
@@ -56,7 +67,8 @@ export async function seedDatabase() {
     try {
         const batch = writeBatch(db);
         
-        if (members.length > 0) {
+        const existingMembers = await getCollection('members');
+        if (existingMembers.length === 0) {
             console.log('Seeding members collection...');
             const membersRef = collection(db, 'members');
             members.forEach((member) => {
@@ -65,19 +77,26 @@ export async function seedDatabase() {
             });
         }
 
-        console.log('Seeding transactions collection...');
-        const transactionsRef = collection(db, 'transactions');
-        transactions.forEach((transaction) => {
-            const docRef = doc(transactionsRef, transaction.id);
-            batch.set(docRef, transaction);
-        });
+        const existingTransactions = await getCollection('transactions');
+        if (existingTransactions.length === 0) {
+            console.log('Seeding transactions collection...');
+            const transactionsRef = collection(db, 'transactions');
+            transactions.forEach((transaction) => {
+                const docRef = doc(transactionsRef, transaction.id);
+                batch.set(docRef, transaction);
+            });
+        }
         
-        console.log('Seeding loans collection...');
-        const loansRef = collection(db, 'loans');
-        loans.forEach((loan) => {
-            const docRef = doc(loansRef, loan.id);
-            batch.set(docRef, loan);
-        });
+        const existingLoans = await getCollection('loans');
+        if (existingLoans.length === 0) {
+            console.log('Seeding loans collection...');
+            const loansRef = collection(db, 'loans');
+            loans.forEach((loan) => {
+                const docRef = doc(loansRef, loan.id);
+                batch.set(docRef, loan);
+            });
+        }
+
 
         await batch.commit();
         console.log('Database seeded successfully!');
