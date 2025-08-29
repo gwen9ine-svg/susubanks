@@ -70,9 +70,8 @@ export async function seedDatabase() {
         const existingMembers = await getCollection('members');
         if (existingMembers.length === 0) {
             console.log('Seeding members collection...');
-            const membersRef = collection(db, 'members');
             members.forEach((member) => {
-                const docRef = doc(membersRef, member.id);
+                const docRef = doc(db, 'members', member.id);
                 batch.set(docRef, member);
             });
         }
@@ -80,9 +79,8 @@ export async function seedDatabase() {
         const existingTransactions = await getCollection('transactions');
         if (existingTransactions.length === 0) {
             console.log('Seeding transactions collection...');
-            const transactionsRef = collection(db, 'transactions');
             transactions.forEach((transaction) => {
-                const docRef = doc(transactionsRef, transaction.id);
+                const docRef = doc(db, 'transactions', transaction.id);
                 batch.set(docRef, transaction);
             });
         }
@@ -90,9 +88,8 @@ export async function seedDatabase() {
         const existingLoans = await getCollection('loans');
         if (existingLoans.length === 0) {
             console.log('Seeding loans collection...');
-            const loansRef = collection(db, 'loans');
             loans.forEach((loan) => {
-                const docRef = doc(loansRef, loan.id);
+                const docRef = doc(db, 'loans', loan.id);
                 batch.set(docRef, loan);
             });
         }
