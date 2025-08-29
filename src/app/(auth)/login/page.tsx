@@ -2,7 +2,7 @@
 'use client';
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,17 +31,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const checkForAdmin = async () => {
-        const members = await getCollection('members');
-        if (members.length === 0) {
-            console.log("No members found, seeding database with default admin.");
-            await seedDatabase();
-        }
-    };
-    checkForAdmin();
-  }, []);
-
   const handleLogin = async () => {
     setIsLoading(true);
 
@@ -56,11 +45,24 @@ export default function LoginPage() {
     }
 
     try {
-      const members = await getCollection('members') as Member[];
+      // Ensure the database is seeded if empty
+      let members = await getCollection('members') as Member[];
+      if (members.length === 0) {
+        console.log("No members found, seeding database with default admin.");
+        await seedDatabase();
+        // Re-fetch members after seeding
+        members = await getCollection('members') as Member[];
+      }
+      
       const user = members.find(member => member.email.toLowerCase() === email.toLowerCase());
 
-      // In a real app, you would have a more secure password check.
-      if (user && user.password === password) {
+      if (!user) {
+        toast({
+          title: "Login Failed",
+          description: "User not found. Please check your email or register for a new account.",
+          variant: "destructive",
+        });
+      } else if (user.password === password) {
         // In a real app, you'd use a secure way to manage sessions (e.g., JWT).
         // For this demo, localStorage is used for simplicity.
         localStorage.setItem('userRole', user.role.toLowerCase());
@@ -70,7 +72,7 @@ export default function LoginPage() {
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid email or password.",
+          description: "Invalid password. Please try again.",
           variant: "destructive",
         });
       }
@@ -93,7 +95,7 @@ export default function LoginPage() {
           <SusuLogo isBank={true} />
         </div>
         <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Securely sign in to your account. The first registered user becomes an admin, or use the default credentials.</CardDescription>
+        <CardDescription>Securely sign in to your account. Use the default credentials or create an account.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
