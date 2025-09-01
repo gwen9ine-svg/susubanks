@@ -29,6 +29,7 @@ type InvitedMember = {
     status: 'Pending' | 'Active' | 'Rejected' | string;
     avatar: string;
     invitedBy?: string;
+    group?: string;
 };
 
 const getStatusBadge = (status: string) => {
@@ -39,6 +40,12 @@ const getStatusBadge = (status: string) => {
         default: return <Badge variant="outline">{status}</Badge>;
     }
 };
+
+const formatGroupName = (group: string | undefined) => {
+    if (!group) return 'N/A';
+    return `Group ${group.replace('group', '')}`;
+};
+
 
 export default function InviteMemberPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -72,7 +79,9 @@ export default function InviteMemberPage() {
     }
 
     useEffect(() => {
-        fetchInvitedMembers();
+        if (userEmail) {
+            fetchInvitedMembers();
+        }
     }, [userEmail]);
 
     const handleRegisterMember = async () => {
@@ -292,6 +301,7 @@ export default function InviteMemberPage() {
                             <TableRow>
                                 <TableHead>Member</TableHead>
                                 <TableHead>Email</TableHead>
+                                <TableHead>Group</TableHead>
                                 <TableHead>Status</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -309,12 +319,13 @@ export default function InviteMemberPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>{member.email}</TableCell>
+                                    <TableCell>{formatGroupName(member.group)}</TableCell>
                                     <TableCell>{getStatusBadge(member.status)}</TableCell>
                                 </TableRow>
                             ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={3} className="text-center">You haven't invited any members yet.</TableCell>
+                                    <TableCell colSpan={4} className="text-center">You haven't invited any members yet.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
