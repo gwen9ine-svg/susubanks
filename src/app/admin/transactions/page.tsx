@@ -415,11 +415,6 @@ export default function AdminTransactionsPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold">User Requests</h1>
-                <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                    <Button variant="outline" asChild>
-                        <Link href="/withdrawals">New Transaction</Link>
-                    </Button>
-                </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {summaryCards.map((card, index) => (
