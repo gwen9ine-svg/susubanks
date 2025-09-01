@@ -45,15 +45,10 @@ export default function LoginPage() {
     }
 
     try {
-      // Ensure the database is seeded if empty
-      let members = await getCollection('members') as Member[];
-      if (members.length === 0) {
-        console.log("No members found, seeding database with default admin.");
-        await seedDatabase();
-        // Re-fetch members after seeding
-        members = await getCollection('members') as Member[];
-      }
+      // Ensure the database is seeded if empty. This now happens reliably.
+      await seedDatabase();
       
+      const members = await getCollection('members') as Member[];
       const user = members.find(member => member.email.toLowerCase() === email.toLowerCase());
 
       if (!user) {
@@ -63,6 +58,10 @@ export default function LoginPage() {
           variant: "destructive",
         });
       } else if (user.password === password) {
+        toast({
+          title: "Welcome Back!",
+          description: `You have successfully logged in as ${user.name}.`,
+        });
         // In a real app, you'd use a secure way to manage sessions (e.g., JWT).
         // For this demo, localStorage is used for simplicity.
         localStorage.setItem('userRole', user.role.toLowerCase());
@@ -100,7 +99,7 @@ export default function LoginPage() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email or Username</Label>
-          <Input id="email" type="email" placeholder="admin@susu.bank" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" placeholder="admin@test.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -109,7 +108,7 @@ export default function LoginPage() {
               Forgot Password?
             </Link>
           </div>
-          <Input id="password" type="password" placeholder="password123" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input id="password" type="password" placeholder="Admin123!" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
@@ -117,7 +116,7 @@ export default function LoginPage() {
           {isLoading ? 'Logging in...' : 'Login'}
         </Button>
         <Button variant="outline" className="w-full" asChild>
-           <Link href="/register">Create Account</Link>
+           <Link href="/auth/register">Create Account</Link>
         </Button>
         <p className="text-xs text-muted-foreground text-center">
           Your information is protected with bank-grade security.

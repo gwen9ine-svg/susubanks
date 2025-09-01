@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from "next/link";
@@ -30,16 +31,17 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [sourceOfFunds, setSourceOfFunds] = useState('');
+  const [group, setGroup] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateAccount = async () => {
     setIsLoading(true);
 
-    if (!fullName || !email || !password || !confirmPassword || !agreed) {
+    if (!fullName || !email || !password || !confirmPassword || !group || !agreed) {
       toast({
         title: "Validation Error",
-        description: "Please fill out all required fields and agree to the terms.",
+        description: "Please fill out all required fields, select a group, and agree to the terms.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -73,7 +75,8 @@ export default function RegisterPage() {
             sourceOfFunds: sourceOfFunds,
             password: password, // In a real app, this should be hashed.
             role: isFirstUser ? "Admin" : "Member", // First user is Admin
-            status: "Active", // Default status
+            status: "Pending", // Default status is now Pending
+            group: group,
             contributed: "GH₵0.00", // Initial contribution
             avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
         };
@@ -81,12 +84,12 @@ export default function RegisterPage() {
         const result = await addDocument('members', newMember, newMember.id);
         if (result.success) {
             toast({
-              title: "Account Created Successfully!",
-              description: "You will now be redirected to the login page.",
+              title: "Account Request Sent!",
+              description: "Your registration is pending approval. You'll be notified upon confirmation.",
             });
             setTimeout(() => {
-                router.push('/login');
-            }, 2000);
+                router.push('/auth/login');
+            }, 3000);
         } else {
             throw new Error(result.error || "An unknown error occurred");
         }
@@ -172,6 +175,28 @@ export default function RegisterPage() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="group">Group</Label>
+            <Select value={group} onValueChange={setGroup}>
+              <SelectTrigger id="group">
+                <SelectValue placeholder="Select a group to join" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="group1">Group 1</SelectItem>
+                <SelectItem value="group2">Group 2</SelectItem>
+                <SelectItem value="group3">Group 3</SelectItem>
+                <SelectItem value="group4">Group 4</SelectItem>
+                <SelectItem value="group5">Group 5</SelectItem>
+                <SelectItem value="group6">Group 6</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+           <div className="space-y-2">
+              <Label htmlFor="source-of-funds">Source of Funds</Label>
+              <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
+            </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input id="password" type="password" placeholder="••••••••" required value={password} onChange={e => setPassword(e.target.value)} />
@@ -180,10 +205,6 @@ export default function RegisterPage() {
                 <Label htmlFor="confirm-password">Confirm Password</Label>
                 <Input id="confirm-password" type="password" placeholder="••••••••" required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
             </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="source-of-funds">Source of Funds</Label>
-          <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
         </div>
         <div className="flex items-start space-x-2">
           <Checkbox id="terms" checked={agreed} onCheckedChange={(checked) => setAgreed(!!checked)} />
@@ -199,10 +220,10 @@ export default function RegisterPage() {
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline" asChild>
-          <Link href="/login">Back</Link>
+          <Link href="/auth/login">Back</Link>
         </Button>
         <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleCreateAccount} disabled={isLoading}>
-            <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
+            <span>{isLoading ? 'Sending Request...' : 'Create Account'}</span>
         </Button>
       </CardFooter>
     </Card>

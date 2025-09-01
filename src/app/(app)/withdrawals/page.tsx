@@ -2,12 +2,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
+  CardDescription,
 } from "@/components/ui/card";
 import {
   Table,
@@ -18,13 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { getCollection } from '@/services/firestore';
-import { format } from 'date-fns';
 
 type Transaction = {
   id: string;
@@ -37,9 +32,11 @@ type Transaction = {
   status: string;
   email?: string;
   desc?: string;
+  group?: string;
 };
 
 const parseAmount = (amount: string): number => {
+    if (!amount) return 0;
     return parseFloat(amount.replace(/[^0-9.-]+/g,""));
 }
 
@@ -47,71 +44,80 @@ const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', currencyDisplay: 'symbol' }).format(value);
 }
 
+const getStatusBadge = (status: string) => {
+    switch(status.toLowerCase()) {
+        case 'approved':
+        case 'completed':
+            return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
+        case 'pending': 
+        case 'processing':
+            return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+        case 'rejected': return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
+        default: return <Badge variant="outline">{status}</Badge>;
+    }
+}
+
+const formatGroupName = (group: string | undefined) => {
+    if (!group) return 'N/A';
+    return `Group ${group.replace('group', '')}`;
+};
+
+
 export default function WithdrawalsPage() {
-  const [withdrawalMethod, setWithdrawalMethod] = useState('bank');
-  const [withdrawalHistory, setWithdrawalHistory] = useState<Transaction[]>([]);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [allWithdrawals, setAllWithdrawals] = useState<Transaction[]>([]);
+  const [groupWithdrawals, setGroupWithdrawals] = useState<Record<string, number>>({});
+
+
   const [summaryData, setSummaryData] = useState({
-    availablePool: 0,
+    totalWithdrawals: 0,
     pendingRequests: 0,
-    myLastWithdrawal: "N/A",
   });
 
+  async function fetchData() {
+    const transactionData = await getCollection('transactions') as Transaction[];
+    const withdrawalTransactions = transactionData.filter(tx => tx.type === 'Withdrawal')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    setAllWithdrawals(withdrawalTransactions);
+
+    const groupTotals: Record<string, number> = {};
+    for (let i = 1; i <= 6; i++) {
+        const groupKey = `group${i}`;
+        groupTotals[groupKey] = withdrawalTransactions
+            .filter(c => c.group === groupKey && (c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved'))
+            .reduce((acc, c) => acc + parseAmount(c.amount), 0);
+    }
+    setGroupWithdrawals(groupTotals);
+
+    const totalWithdrawals = withdrawalTransactions
+        .filter(tx => tx.status === 'Completed' || tx.status === 'Approved')
+        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+    
+    const pendingWithdrawals = withdrawalTransactions.filter(tx => tx.status.toLowerCase() === 'pending' || tx.status.toLowerCase() === 'processing');
+
+    setSummaryData({
+      totalWithdrawals: totalWithdrawals,
+      pendingRequests: pendingWithdrawals.length,
+    });
+  }
+
   useEffect(() => {
-    const email = localStorage.getItem('userEmail');
-    setUserEmail(email);
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    if (!userEmail) return;
-
-    async function fetchData() {
-      const transactionData = await getCollection('transactions') as Transaction[];
-      
-      const totalContributions = transactionData
-        .filter(tx => tx.type === 'Contribution')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-        
-      const totalWithdrawals = transactionData
-        .filter(tx => tx.type === 'Withdrawal')
-        .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-
-      const pendingWithdrawals = transactionData.filter(tx => tx.type === 'Withdrawal' && tx.status === 'Pending');
-
-      const myWithdrawals = transactionData
-        .filter(tx => tx.type === 'Withdrawal' && tx.email === userEmail)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      setWithdrawalHistory(myWithdrawals);
-
-      let lastWithdrawalString = "N/A";
-      if (myWithdrawals.length > 0) {
-        const lastTx = myWithdrawals[0];
-        lastWithdrawalString = `${lastTx.amount} on ${format(new Date(lastTx.date), 'MMM d, yyyy')}`;
-      }
-
-      setSummaryData({
-        availablePool: totalContributions - totalWithdrawals,
-        pendingRequests: pendingWithdrawals.length,
-        myLastWithdrawal: lastWithdrawalString,
-      });
-    }
-    fetchData();
-  }, [userEmail]);
 
   const summaryCards = [
-    { title: "Available Pool", value: formatCurrency(summaryData.availablePool) },
-    { title: "Pending Requests", value: summaryData.pendingRequests.toString() },
-    { title: "My Last Withdrawal", value: summaryData.myLastWithdrawal },
+    { title: "Total User Withdrawals", value: formatCurrency(summaryData.totalWithdrawals) },
+    { title: "Pending Withdrawal Requests", value: summaryData.pendingRequests.toString() },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Withdrawals</h1>
+        <h1 className="text-2xl font-bold">Withdrawal History</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {summaryCards.map((card, index) => (
           <Card key={index}>
             <CardHeader>
@@ -123,98 +129,58 @@ export default function WithdrawalsPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Withdrawals by Group</CardTitle>
+            <CardDescription>Total withdrawals for each group.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(groupWithdrawals).map(([group, total]) => (
+                <Link href={`/admin/groups/${group}`} key={group} passHref>
+                    <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium capitalize">{group.replace('group', 'Group ')}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{formatCurrency(total)}</div>
+                        </CardContent>
+                    </Card>
+                </Link>
+            ))}
+        </CardContent>
+      </Card>
       
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>Request Withdrawal</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-             <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
-                <Input id="amount" type="number" placeholder="500.00" />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="group-name">Group Name</Label>
-                <Select>
-                  <SelectTrigger id="group-name">
-                    <SelectValue placeholder="Select group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="accra">Susu Collective Accra</SelectItem>
-                    <SelectItem value="kumasi">Susu Collective Kumasi</SelectItem>
-                  </SelectContent>
-                </Select>
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="destination">Destination</Label>
-                 <Select onValueChange={setWithdrawalMethod} defaultValue="bank">
-                    <SelectTrigger id="destination"><SelectValue placeholder="Select account" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="bank">Bank Account</SelectItem>
-                        <SelectItem value="momo">Momo</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            {withdrawalMethod === 'bank' && (
-              <div className="space-y-4 rounded-md border p-4">
-                 <div className="space-y-2">
-                  <Label htmlFor="bank-name">Bank Name</Label>
-                  <Input id="bank-name" placeholder="Enter bank name" />
-                </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="account-number">Account Number</Label>
-                  <Input id="account-number" placeholder="Enter account number" />
-                </div>
-              </div>
-            )}
-            {withdrawalMethod === 'momo' && (
-              <div className="space-y-2 rounded-md border p-4">
-                 <Label htmlFor="momo-number">Momo Number</Label>
-                  <Input id="momo-number" placeholder="Enter momo number" />
-              </div>
-            )}
-            
-            <div className="space-y-2">
-                <Label htmlFor="reason">Reason</Label>
-                <Textarea id="reason" placeholder="Reason for withdrawal (e.g., emergency, project)" />
-            </div>
-          </CardContent>
-          <CardFooter className="flex-col items-start gap-4">
-            <p className="text-xs text-muted-foreground">Withdrawal requests require approval from 2 admins. This may take up to 48 hours.</p>
-            <div className="flex flex-col gap-2">
-                <Button>Submit Request</Button>
-                <Button variant="ghost">Cancel</Button>
-            </div>
-          </CardFooter>
-        </Card>
-
-         <Card className="md:col-span-1">
+      <div className="grid gap-6 md:grid-cols-1">
+         <Card>
             <CardHeader>
-                <CardTitle>My Withdrawal History</CardTitle>
+                <CardTitle>All Withdrawal History</CardTitle>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>Member</TableHead>
                             <TableHead>Description</TableHead>
-                            <TableHead>Type</TableHead>
+                            <TableHead>Group</TableHead>
                             <TableHead>Amount</TableHead>
+                            <TableHead>Status</TableHead>
                             <TableHead>Date</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {withdrawalHistory.length > 0 ? withdrawalHistory.map((item, i) => (
+                        {allWithdrawals.length > 0 ? allWithdrawals.map((item, i) => (
                         <TableRow key={i}>
+                            <TableCell>{item.member}</TableCell>
                             <TableCell className="font-medium">{item.desc || item.type}</TableCell>
-                            <TableCell><Badge variant="outline" className="border-accent text-accent">{item.type}</Badge></TableCell>
+                            <TableCell>{formatGroupName(item.group)}</TableCell>
                             <TableCell>{item.amount}</TableCell>
+                            <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>{item.date}</TableCell>
                         </TableRow>
                         )) : (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center">No withdrawal history.</TableCell>
+                            <TableCell colSpan={6} className="text-center">No withdrawal history.</TableCell>
                           </TableRow>
                         )}
                     </TableBody>

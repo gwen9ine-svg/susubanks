@@ -7,18 +7,16 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { getCollection, seedDatabase } from "@/services/firestore"
 
-// ✅ Placeholder summary and metric cards
-const summaryCards = [
-  { title: "Total Members", value: "25", description: "Active members in the group" },
-  { title: "Total Savings", value: "₵12,500", description: "Total contributions" },
-  { title: "Pending Withdrawals", value: "₵1,200", description: "Awaiting approval" },
-]
+const parseAmount = (amount: string): number => {
+    if (!amount || typeof amount !== 'string') return 0;
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
 
-const metricCards = [
-  { title: "Monthly Savings", value: "₵2,500" },
-  { title: "Approved Withdrawals", value: "₵1,000" },
-]
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', currencyDisplay: 'symbol' }).format(value);
+}
 
 // ✅ Helper for status color
 function getStatusColor(status: string) {
@@ -37,23 +35,60 @@ function getStatusColor(status: string) {
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [members, setMembers] = useState<any[]>([])
+  const [summaryCards, setSummaryCards] = useState([
+    { title: "Total Members", value: "0", description: "Active members in the group" },
+    { title: "Total Savings", value: formatCurrency(0), description: "Total contributions" },
+    { title: "Pending Withdrawals", value: formatCurrency(0), description: "Awaiting approval" },
+  ])
 
-  // ✅ Simulate fetching members
+  const [metricCards, setMetricCards] = useState([
+    { title: "Monthly Savings", value: "₵2,500" },
+    { title: "Approved Withdrawals", value: formatCurrency(0) },
+  ]);
+
+  async function fetchData() {
+    setLoading(true);
+
+    const memberData = await getCollection('members');
+    const transactionData = await getCollection('transactions');
+
+    const totalMembers = memberData.length;
+    
+    const totalSavings = transactionData
+        .filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Completed' || tx.status === 'Approved'))
+        .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
+    
+    const pendingWithdrawals = transactionData
+        .filter((tx: any) => tx.type === 'Withdrawal' && tx.status === 'Pending')
+        .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
+
+    const approvedWithdrawals = transactionData
+        .filter((tx: any) => tx.type === 'Withdrawal' && (tx.status === 'Approved' || tx.status === 'Completed'))
+        .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
+
+    setSummaryCards([
+        { title: "Total Members", value: totalMembers.toString(), description: "Active members in the group" },
+        { title: "Total Savings", value: formatCurrency(totalSavings), description: "Total contributions" },
+        { title: "Pending Withdrawals", value: formatCurrency(pendingWithdrawals), description: "Awaiting approval" },
+    ]);
+
+    setMetricCards([
+        { title: "Monthly Savings", value: "₵2,500" },
+        { title: "Approved Withdrawals", value: formatCurrency(approvedWithdrawals) },
+    ]);
+    
+    setMembers(memberData);
+    setLoading(false);
+  }
+
   useEffect(() => {
-    setTimeout(() => {
-      setMembers([
-        { id: 1, name: "Alice Johnson", email: "alice@example.com", avatar: "", contributed: "₵500", status: "Active" },
-        { id: 2, name: "Michael Smith", email: "michael@example.com", avatar: "", contributed: "₵300", status: "Pending" },
-      ])
-      setLoading(false)
-    }, 1500)
+    fetchData();
   }, [])
-
-  // ✅ Simulate seeding database
-  const handleSeed = () => {
-    setMembers([
-      { id: 3, name: "John Doe", email: "john@example.com", avatar: "", contributed: "₵200", status: "Inactive" },
-    ])
+  
+  const handleSeed = async () => {
+    setLoading(true);
+    await seedDatabase();
+    await fetchData();
   }
 
   return (

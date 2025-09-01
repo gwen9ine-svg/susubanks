@@ -3,6 +3,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ type Transaction = {
   amount: string;
   date: string;
   status: string;
+  email?: string;
 };
 
 type SummaryData = {
@@ -57,6 +59,7 @@ const getTypeBadge = (type: string) => {
 const getStatusBadge = (status: string) => {
     switch(status.toLowerCase()) {
         case 'completed':
+        case 'approved':
             return <Badge variant="secondary" className="bg-green-100 text-green-800">Completed</Badge>;
         case 'pending':
         case 'processing':
@@ -77,6 +80,7 @@ const formatCurrency = (value: number): string => {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [summaryData, setSummaryData] = useState<SummaryData>({
     totalVolume: 0,
     totalContributions: 0,
@@ -87,28 +91,46 @@ export default function TransactionsPage() {
   });
 
   useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    setUserEmail(email);
+  }, []);
+
+  useEffect(() => {
     async function fetchTransactions() {
       setLoading(true);
-      const transactionData = await getCollection('transactions');
-      setTransactions(transactionData as Transaction[]);
+      const transactionData = await getCollection('transactions') as Transaction[];
+      
+      let userTransactions = transactionData;
+      const email = localStorage.getItem('userEmail');
+      if(email) {
+        userTransactions = transactionData.filter(tx => tx.email === email);
+      }
+      
+      const sortedTransactions = userTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setTransactions(sortedTransactions);
       setLoading(false);
     }
+    
     fetchTransactions();
+
   }, []);
 
   useEffect(() => {
     if (transactions.length > 0) {
       const summary = transactions.reduce((acc, tx) => {
         const amount = parseAmount(tx.amount);
-        acc.totalVolume += amount;
-        acc.totalEntries++;
+        const status = tx.status.toLowerCase();
 
         if (tx.type === 'Contribution') {
-          acc.totalContributions += amount;
-          acc.contributionEntries++;
+          if (status === 'completed' || status === 'approved' || status === 'processing' || status === 'pending') {
+            acc.totalContributions += amount;
+            acc.contributionEntries++;
+          }
         } else if (tx.type === 'Withdrawal') {
-          acc.totalWithdrawals += amount;
-          acc.withdrawalEntries++;
+          if (status === 'completed' || status === 'approved') {
+            acc.totalWithdrawals += amount;
+            acc.withdrawalEntries++;
+          }
         }
         return acc;
       }, {
@@ -119,7 +141,20 @@ export default function TransactionsPage() {
         withdrawalEntries: 0,
         totalEntries: 0,
       });
+
+      summary.totalVolume = summary.totalContributions + summary.totalWithdrawals;
+      summary.totalEntries = summary.contributionEntries + summary.withdrawalEntries;
+
       setSummaryData(summary);
+    } else {
+        setSummaryData({
+            totalVolume: 0,
+            totalContributions: 0,
+            totalWithdrawals: 0,
+            contributionEntries: 0,
+            withdrawalEntries: 0,
+            totalEntries: 0,
+        });
     }
   }, [transactions]);
   
@@ -133,9 +168,11 @@ export default function TransactionsPage() {
   return (
     <div className="space-y-6">
        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Transactions</h1>
+        <h1 className="text-2xl font-bold">My Transactions</h1>
         <div className="flex items-center gap-2 mt-2 sm:mt-0">
-          <Button variant="outline">New Transaction</Button>
+          <Button variant="outline" asChild>
+            <Link href="/withdrawals">New Transaction</Link>
+          </Button>
         </div>
       </div>
       
@@ -157,7 +194,7 @@ export default function TransactionsPage() {
         <div className="space-y-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>All Transactions</CardTitle>
+                    <CardTitle>All My Transactions</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>

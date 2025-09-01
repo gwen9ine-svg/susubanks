@@ -55,7 +55,7 @@ export default function VerifyPage() {
         </Button>
         <div className="flex justify-between w-full">
             <Button variant="link" className="p-0" asChild>
-                <Link href="/register">Back</Link>
+                <Link href="/auth/register">Back</Link>
             </Button>
             <Button variant="link" className="p-0" asChild>
                 <Link href="#">Change email/phone</Link>
