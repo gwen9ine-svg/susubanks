@@ -92,8 +92,9 @@ const getStatusBadge = (status: string) => {
         case 'Active':
             return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
         case 'Pending': 
+            return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
         case 'Outstanding':
-            return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+            return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
         case 'Rejected': return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
         default: return <Badge variant="outline">{status}</Badge>;
     }
@@ -489,3 +490,5 @@ export default function AdminTransactionsPage() {
     )
 }
 
+
+    
