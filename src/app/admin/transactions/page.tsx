@@ -99,18 +99,19 @@ const getStatusBadge = (status: string) => {
     }
 }
 
-type TransactionTableProps = {
+type GenericTableCardProps = {
     items: (Transaction | Loan)[];
-    handleItemStatus: (itemId: string, newStatus: 'Approved' | 'Rejected', collection: 'transactions' | 'loans') => void;
-    handleAcceptAll: (collection: 'transactions' | 'loans') => void;
-    handleDeclineAll: (collection: 'transactions' | 'loans') => void;
-    handleDeleteItem: (itemId: string, collection: 'transactions' | 'loans') => void;
+    handleItemStatus?: (itemId: string, newStatus: 'Approved' | 'Rejected', collection: 'transactions' | 'loans') => void;
+    handleAcceptAll?: (collection: 'transactions' | 'loans') => void;
+    handleDeclineAll?: (collection: 'transactions' | 'loans') => void;
+    handleDeleteItem?: (itemId: string, collection: 'transactions' | 'loans') => void;
     isLoanTable?: boolean;
     title: string;
+    isRequestTable?: boolean;
 };
 
 
-const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcceptAll, handleDeclineAll, isLoanTable = false, title }: TransactionTableProps) => {
+const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcceptAll, handleDeclineAll, isLoanTable = false, title, isRequestTable = false }: GenericTableCardProps) => {
     const collection = isLoanTable ? 'loans' : 'transactions';
     
     if (items.length === 0) {
@@ -120,7 +121,7 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
             <CardTitle>{title}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground text-center py-4">No {title.toLowerCase()} found.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">No {isRequestTable ? 'pending requests' : 'items'} found.</p>
           </CardContent>
         </Card>
       );
@@ -130,16 +131,18 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
     <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{title}</CardTitle>
-            <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => handleAcceptAll(collection)}>Accept All</Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeclineAll(collection)}>Decline All</Button>
-            </div>
+            {isRequestTable && handleAcceptAll && handleDeclineAll && (
+              <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleAcceptAll(collection)}>Accept All</Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleDeclineAll(collection)}>Decline All</Button>
+              </div>
+            )}
         </CardHeader>
         <CardContent className="pt-0">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead><Checkbox /></TableHead>
+                        {isRequestTable && <TableHead><Checkbox /></TableHead>}
                         <TableHead>Date</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Member</TableHead>
@@ -152,7 +155,7 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
                 <TableBody>
                     {items.map((item) => (
                         <TableRow key={item.id}>
-                            <TableCell><Checkbox /></TableCell>
+                            {isRequestTable && <TableCell><Checkbox /></TableCell>}
                             <TableCell>{item.date}</TableCell>
                             <TableCell>{isLoanTable ? getTypeBadge('Loan') : getTypeBadge((item as Transaction).type)}</TableCell>
                             <TableCell>{isLoanTable ? (item as Loan).memberName : (item as Transaction).member}</TableCell>
@@ -160,7 +163,7 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
                             <TableCell>{item.amount}</TableCell>
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>
-                                {item.status === 'Pending' || item.status === 'Outstanding' ? (
+                                {isRequestTable && handleItemStatus ? (
                                     <div className="flex gap-1">
                                         <Button onClick={() => handleItemStatus(item.id, 'Approved', collection)} variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700"><Check className="h-4 w-4"/></Button>
                                         <Button onClick={() => handleItemStatus(item.id, 'Rejected', collection)} variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"><X className="h-4 w-4"/></Button>
@@ -173,10 +176,12 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
                                         <DropdownMenuContent>
                                             <DropdownMenuItem>View Details</DropdownMenuItem>
                                             {!isLoanTable && <DropdownMenuItem>Create Dispute</DropdownMenuItem>}
-                                            <DropdownMenuItem onClick={() => handleDeleteItem(item.id, collection)} className="text-red-600 hover:text-red-700">
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete
-                                            </DropdownMenuItem>
+                                            {handleDeleteItem && (
+                                                <DropdownMenuItem onClick={() => handleDeleteItem(item.id, collection)} className="text-red-600 hover:text-red-700">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 )}
@@ -421,6 +426,8 @@ export default function AdminTransactionsPage() {
     const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing'));
     const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing'));
     const loanRequests = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding');
+    const loanHistory = loans.filter(l => l.status !== 'Pending' && l.status !== 'Outstanding');
+
 
     return (
         <div className="space-y-6">
@@ -448,6 +455,7 @@ export default function AdminTransactionsPage() {
                     handleAcceptAll={() => handleAcceptAll('transactions')} 
                     handleDeclineAll={() => handleDeclineAll('transactions')} 
                     title="Deposit Requests"
+                    isRequestTable={true}
                 />
                 <GenericTableCard 
                     items={withdrawals} 
@@ -456,6 +464,7 @@ export default function AdminTransactionsPage() {
                     handleAcceptAll={() => handleAcceptAll('transactions')} 
                     handleDeclineAll={() => handleDeclineAll('transactions')} 
                     title="Withdrawal Requests"
+                    isRequestTable={true}
                 />
                 <GenericTableCard 
                     items={loanRequests} 
@@ -464,10 +473,19 @@ export default function AdminTransactionsPage() {
                     handleAcceptAll={() => handleAcceptAll('loans')} 
                     handleDeclineAll={() => handleDeclineAll('loans')} 
                     isLoanTable={true}
-                    title="Loan Requests" 
+                    title="Loan Requests"
+                    isRequestTable={true}
+                />
+                <GenericTableCard
+                    items={loanHistory}
+                    isLoanTable={true}
+                    title="Loan History"
+                    handleDeleteItem={handleDeleteItem}
+                    isRequestTable={false}
                 />
                 <MemberRequestsTable members={pendingMembers} handleUserApproval={handleUserApproval} />
             </div>
         </div>
     )
 }
+
