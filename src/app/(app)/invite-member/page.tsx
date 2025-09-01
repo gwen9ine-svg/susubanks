@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,9 +15,30 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { addDocument } from '@/services/firestore';
+import { addDocument, getCollection } from '@/services/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
+type InvitedMember = {
+    id: string;
+    name: string;
+    email: string;
+    status: 'Pending' | 'Active' | 'Rejected' | string;
+    avatar: string;
+    invitedBy?: string;
+};
+
+const getStatusBadge = (status: string) => {
+    switch (status) {
+        case "Active": return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
+        case "Pending": return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+        case "Rejected": return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
+        default: return <Badge variant="outline">{status}</Badge>;
+    }
+};
 
 export default function InviteMemberPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +55,25 @@ export default function InviteMemberPage() {
     const [sourceOfIncome, setSourceOfIncome] = useState('');
     const [group, setGroup] = useState('');
     const [password, setPassword] = useState('password123'); // Default password
+
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [invitedMembers, setInvitedMembers] = useState<InvitedMember[]>([]);
+
+    useEffect(() => {
+        const loggedInEmail = localStorage.getItem('userEmail');
+        setUserEmail(loggedInEmail);
+    }, []);
+
+    async function fetchInvitedMembers() {
+        if (!userEmail) return;
+        const allMembers = await getCollection('members') as InvitedMember[];
+        const myInvites = allMembers.filter(member => member.invitedBy === userEmail);
+        setInvitedMembers(myInvites);
+    }
+
+    useEffect(() => {
+        fetchInvitedMembers();
+    }, [userEmail]);
 
     const handleRegisterMember = async () => {
         if (!fullName || !email || !group || !username || !address || !maritalStatus || !idCard || !sourceOfIncome || !govIdType) {
@@ -63,6 +103,7 @@ export default function InviteMemberPage() {
             status: "Pending", // New members start as pending
             contributed: "GH₵0.00",
             avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
+            invitedBy: userEmail, // Track who invited this member
         };
 
         try {
@@ -82,6 +123,7 @@ export default function InviteMemberPage() {
             setIdCard('');
             setSourceOfIncome('');
             setGroup('');
+            fetchInvitedMembers(); // Refresh the list
         } catch (error) {
             console.error("Error registering member:", error);
             toast({
@@ -238,6 +280,48 @@ export default function InviteMemberPage() {
                     </Button>
                 </CardFooter>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>My Invitation History</CardTitle>
+                    <CardDescription>Track the approval status of members you have registered.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Member</TableHead>
+                                <TableHead>Email</TableHead>
+                                <TableHead>Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {invitedMembers.length > 0 ? (
+                                invitedMembers.map((member) => (
+                                <TableRow key={member.id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Avatar className="h-6 w-6">
+                                                <AvatarImage src={member.avatar} data-ai-hint="person avatar" />
+                                                <AvatarFallback>{member.name.substring(0,1)}</AvatarFallback>
+                                            </Avatar>
+                                            <span>{member.name}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{member.email}</TableCell>
+                                    <TableCell>{getStatusBadge(member.status)}</TableCell>
+                                </TableRow>
+                            ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center">You haven't invited any members yet.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
     );
 }
+
