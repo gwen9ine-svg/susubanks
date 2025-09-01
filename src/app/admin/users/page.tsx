@@ -281,33 +281,6 @@ export default function UsersDirectoryPage() {
                             </Tabs>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>New User Approval</CardTitle>
-                            <CardDescription>Review and approve new member requests.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {loading ? (
-                                <p>Loading requests...</p>
-                            ) : pendingUsers.length > 0 ? (
-                                pendingUsers.map(user => (
-                                    <div key={user.id} className="flex items-center justify-between">
-                                        <div>
-                                            <p className="font-medium">{user.name}</p>
-                                            <p className="text-sm text-muted-foreground">{user.email}</p>
-                                            <p className="text-sm text-muted-foreground">Group: {user.group ? user.group.replace('group', 'Group ') : 'N/A'}</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button onClick={() => handleUserApproval(user.id, 'Active')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Approve</Button>
-                                            <Button onClick={() => handleUserApproval(user.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center">No new user requests.</p>
-                            )}
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
         </div>
