@@ -25,6 +25,7 @@ export default function RegisterPage() {
   const [nationality, setNationality] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [relativePhone, setRelativePhone] = useState('');
   const [address, setAddress] = useState('');
   const [govIdType, setGovIdType] = useState('');
   const [idNumber, setIdNumber] = useState('');
@@ -67,6 +68,7 @@ export default function RegisterPage() {
             name: fullName,
             email: email,
             phone: phone,
+            relativePhone: relativePhone,
             dob: dob,
             nationality: nationality,
             address: address,
@@ -152,6 +154,12 @@ export default function RegisterPage() {
                 <Input id="phone" type="tel" placeholder="+233 12 345 6789" required value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="relative-phone">Next of Kin Phone</Label>
+                <Input id="relative-phone" type="tel" placeholder="+233 12 345 6789" value={relativePhone} onChange={e => setRelativePhone(e.target.value)} />
+            </div>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="address">Residential Address</Label>
           <Input id="address" placeholder="123 Main St, Anytown, USA" required value={address} onChange={e => setAddress(e.target.value)} />
@@ -232,3 +240,5 @@ export default function RegisterPage() {
     </Card>
   );
 }
+
+    
