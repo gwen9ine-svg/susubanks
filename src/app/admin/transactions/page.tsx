@@ -39,7 +39,7 @@ type Transaction = {
   ref: string;
   member: string;
   avatar: string;
-  type: 'Contribution' | 'Withdrawal' | 'Dispute' | string;
+  type: 'Contribution' | 'Withdrawal' | 'Dispute' | 'Deposit' | string;
   amount: string;
   date: string;
   status: 'Approved' | 'Pending' | 'Rejected' | 'Completed' | string;
@@ -104,8 +104,7 @@ const getStatusBadge = (status: string) => {
 type GenericTableCardProps = {
     items: any[];
     handleItemStatus?: (itemId: string, newStatus: 'Approved' | 'Rejected', collection: 'transactions' | 'loans') => void;
-    handleAcceptAll?: (collection: 'transactions' | 'loans') => void;
-    handleDeclineAll?: (collection: 'transactions' | 'loans') => void;
+    handleBulkAction?: (action: 'approve' | 'decline') => void;
     handleDeleteItem?: (itemId: string, collection: string) => void;
     isHistoryTable?: boolean;
     title: string;
@@ -113,9 +112,9 @@ type GenericTableCardProps = {
 };
 
 
-const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcceptAll, handleDeclineAll, isHistoryTable = false, title, isRequestTable = false }: GenericTableCardProps) => {
+const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleBulkAction, isHistoryTable = false, title, isRequestTable = false }: GenericTableCardProps) => {
     
-    if (items.length === 0) {
+    if (items.length === 0 && !isHistoryTable) {
       return (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -127,15 +126,19 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
         </Card>
       );
     }
+    
+    if(isHistoryTable && items.length === 0){
+        return null;
+    }
 
     return (
     <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>{title}</CardTitle>
-            {isRequestTable && handleAcceptAll && handleDeclineAll && (
+            {isRequestTable && handleBulkAction && (
               <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleAcceptAll(items[0].itemType === 'loan' ? 'loans' : 'transactions')}>Accept All</Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeclineAll(items[0].itemType === 'loan' ? 'loans' : 'transactions')}>Decline All</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleBulkAction('approve')}>Accept All</Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleBulkAction('decline')}>Decline All</Button>
               </div>
             )}
         </CardHeader>
@@ -202,7 +205,20 @@ type MemberTableProps = {
     handleUserApproval: (userId: string, newStatus: 'Active' | 'Rejected') => void;
 };
 
-const MemberRequestsTable = ({ members, handleUserApproval }: MemberTableProps) => (
+const MemberRequestsTable = ({ members, handleUserApproval }: MemberTableProps) => {
+     if (members.length === 0) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>New Member Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground text-center py-4">No new member requests found.</p>
+                </CardContent>
+            </Card>
+        );
+    }
+    return (
     <Card>
         <CardHeader>
             <CardTitle>New Member Requests</CardTitle>
@@ -219,7 +235,7 @@ const MemberRequestsTable = ({ members, handleUserApproval }: MemberTableProps) 
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {members.length > 0 ? members.map(user => (
+                    {members.map(user => (
                         <TableRow key={user.id}>
                             <TableCell>
                                 <div className="flex items-center gap-3">
@@ -240,16 +256,12 @@ const MemberRequestsTable = ({ members, handleUserApproval }: MemberTableProps) 
                                 </div>
                             </TableCell>
                         </TableRow>
-                    )) : (
-                        <TableRow>
-                            <TableCell colSpan={5} className="text-center">No new member requests.</TableCell>
-                        </TableRow>
-                    )}
+                    ))}
                 </TableBody>
             </Table>
         </CardContent>
     </Card>
-);
+)};
 
 
 export default function AdminTransactionsPage() {
@@ -353,78 +365,36 @@ export default function AdminTransactionsPage() {
         }
     };
     
-    const handleAcceptAll = async (collectionName: 'transactions' | 'loans') => {
-        let itemsToUpdate;
-
-        if (collectionName === 'transactions') {
-            itemsToUpdate = transactions.filter(t => t.status === 'Pending' || t.status === 'Processing');
-        } else {
-            itemsToUpdate = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding');
-        }
-
-        if (itemsToUpdate.length === 0) {
-            toast({ title: `No pending items to approve in ${collectionName}.` });
+     const handleBulkAction = async (items: (Transaction | Loan)[], collectionName: 'transactions' | 'loans', action: 'approve' | 'decline') => {
+        if (items.length === 0) {
+            toast({ title: `No pending items to ${action}.` });
             return;
         }
 
+        const newStatus = action === 'approve' ? (collectionName === 'loans' ? 'Paid' : 'Approved') : 'Rejected';
+
         try {
             const batch = writeBatch(db);
-            const finalStatus = collectionName === 'loans' ? 'Paid' : 'Approved';
-            itemsToUpdate.forEach(item => {
+            items.forEach(item => {
                 const docRef = doc(db, collectionName, item.id);
-                batch.update(docRef, { status: finalStatus });
+                batch.update(docRef, { status: newStatus });
             });
             await batch.commit();
             toast({
-                title: 'All Pending Items Accepted',
-                description: `All pending items in ${collectionName} have been accepted.`,
+                title: `All Pending Items ${action === 'approve' ? 'Accepted' : 'Declined'}`,
+                description: `All pending items in ${collectionName} have been ${action === 'approve' ? 'accepted' : 'declined'}.`,
             });
             fetchData();
         } catch (error) {
-            console.error(`Error accepting all items in ${collectionName}:`, error);
+            console.error(`Error with bulk ${action} in ${collectionName}:`, error);
             toast({
-                title: 'Bulk Accept Error',
-                description: `Failed to accept all items. Please try again.`,
+                title: `Bulk ${action.charAt(0).toUpperCase() + action.slice(1)} Error`,
+                description: `Failed to ${action} all items. Please try again.`,
                 variant: 'destructive',
             });
         }
     };
 
-    const handleDeclineAll = async (collectionName: 'transactions' | 'loans') => {
-        let itemsToUpdate;
-
-        if (collectionName === 'transactions') {
-            itemsToUpdate = transactions.filter(t => t.status === 'Pending' || t.status === 'Processing');
-        } else {
-            itemsToUpdate = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding');
-        }
-        
-        if (itemsToUpdate.length === 0) {
-            toast({ title: 'No pending items to decline.' });
-            return;
-        }
-
-        try {
-            const batch = writeBatch(db);
-            itemsToUpdate.forEach(item => {
-                const docRef = doc(db, collectionName, item.id);
-                batch.update(docRef, { status: 'Rejected' });
-            });
-            await batch.commit();
-            toast({
-                title: 'All Pending Items Declined',
-                description: `All pending items in ${collectionName} have been declined.`,
-            });
-            fetchData();
-        } catch (error) {
-            console.error(`Error declining all items in ${collectionName}:`, error);
-            toast({
-                title: 'Bulk Decline Error',
-                description: `Failed to decline all items. Please try again.`,
-                variant: 'destructive',
-            });
-        }
-    };
 
     const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing')).map(tx => ({...tx, itemType: 'transaction'}));
     const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing')).map(tx => ({...tx, itemType: 'transaction'}));
@@ -465,8 +435,7 @@ export default function AdminTransactionsPage() {
                     items={deposits} 
                     handleItemStatus={handleItemStatus} 
                     handleDeleteItem={(id) => handleDeleteItem(id, 'transactions')} 
-                    handleAcceptAll={() => handleAcceptAll('transactions')} 
-                    handleDeclineAll={() => handleDeclineAll('transactions')} 
+                    handleBulkAction={(action) => handleBulkAction(deposits, 'transactions', action)}
                     title="Deposit Requests"
                     isRequestTable={true}
                 />
@@ -474,8 +443,7 @@ export default function AdminTransactionsPage() {
                     items={withdrawals} 
                     handleItemStatus={handleItemStatus} 
                     handleDeleteItem={(id) => handleDeleteItem(id, 'transactions')} 
-                    handleAcceptAll={() => handleAcceptAll('transactions')} 
-                    handleDeclineAll={() => handleDeclineAll('transactions')} 
+                    handleBulkAction={(action) => handleBulkAction(withdrawals, 'transactions', action)}
                     title="Withdrawal Requests"
                     isRequestTable={true}
                 />
@@ -483,8 +451,7 @@ export default function AdminTransactionsPage() {
                     items={loanRequests} 
                     handleItemStatus={handleItemStatus} 
                     handleDeleteItem={(id) => handleDeleteItem(id, 'loans')} 
-                    handleAcceptAll={() => handleAcceptAll('loans')} 
-                    handleDeclineAll={() => handleDeclineAll('loans')} 
+                    handleBulkAction={(action) => handleBulkAction(loanRequests, 'loans', action)}
                     title="Loan Requests"
                     isRequestTable={true}
                 />
@@ -499,6 +466,3 @@ export default function AdminTransactionsPage() {
         </div>
     )
 }
-
-
-    
