@@ -20,12 +20,16 @@ export default function AddMemberPage() {
     const [newMemberAddress, setNewMemberAddress] = useState('');
     const [newMemberMaritalStatus, setNewMemberMaritalStatus] = useState('');
     const [newMemberRole, setNewMemberRole] = useState('');
+    const [nationality, setNationality] = useState('');
+    const [group, setGroup] = useState('');
+    const [sourceOfFunds, setSourceOfFunds] = useState('');
+
 
     const handleAddMember = async () => {
-        if (!newMemberName || !newMemberEmail || !newMemberRole) {
+        if (!newMemberName || !newMemberEmail || !newMemberRole || !group) {
             toast({
                 title: "Validation Error",
-                description: "Please provide name, email, and role for the new member.",
+                description: "Please provide name, email, role, and group for the new member.",
                 variant: "destructive",
             });
             return;
@@ -41,6 +45,9 @@ export default function AddMemberPage() {
             address: newMemberAddress,
             maritalStatus: newMemberMaritalStatus,
             role: newMemberRole,
+            nationality: nationality,
+            group: group,
+            sourceOfFunds: sourceOfFunds,
             status: "Active", // Admins add active users directly
             contributed: "GH₵0.00",
             avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
@@ -60,6 +67,10 @@ export default function AddMemberPage() {
             setNewMemberAddress('');
             setNewMemberMaritalStatus('');
             setNewMemberRole('');
+            setNationality('');
+            setGroup('');
+            setSourceOfFunds('');
+
         } catch (error) {
             console.error("Error adding member:", error);
             toast({
@@ -124,6 +135,43 @@ export default function AddMemberPage() {
                                 </SelectContent>
                             </Select>
                          </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="nationality">Nationality</Label>
+                            <Select value={nationality} onValueChange={setNationality}>
+                            <SelectTrigger id="nationality">
+                                <SelectValue placeholder="Select nationality" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="usa">United States</SelectItem>
+                                <SelectItem value="can">Canada</SelectItem>
+                                <SelectItem value="uk">United Kingdom</SelectItem>
+                                <SelectItem value="nga">Nigeria</SelectItem>
+                                <SelectItem value="gha">Ghana</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="group">Group</Label>
+                            <Select value={group} onValueChange={setGroup}>
+                            <SelectTrigger id="group">
+                                <SelectValue placeholder="Select a group to join" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="group1">Group 1</SelectItem>
+                                <SelectItem value="group2">Group 2</SelectItem>
+                                <SelectItem value="group3">Group 3</SelectItem>
+                                <SelectItem value="group4">Group 4</SelectItem>
+                                <SelectItem value="group5">Group 5</SelectItem>
+                                <SelectItem value="group6">Group 6</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="source-of-funds">Source of Funds</Label>
+                        <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
                     </div>
                     <Button onClick={handleAddMember} disabled={isLoading}>
                         {isLoading ? 'Adding Member...' : 'Add Member'}
