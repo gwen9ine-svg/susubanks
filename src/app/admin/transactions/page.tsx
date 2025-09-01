@@ -427,7 +427,7 @@ export default function AdminTransactionsPage() {
     const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing'));
     const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing'));
     const loanRequests = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding');
-    const loanHistory = loans.filter(l => l.status !== 'Pending' && l.status !== 'Outstanding');
+    const loanHistory = loans.filter(l => l.status === 'Paid' || l.status === 'Rejected');
 
 
     return (
