@@ -12,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { getCollection, seedDatabase } from "@/services/firestore"
-import { HandCoins, Landmark } from "lucide-react"
+import { HandCoins, Landmark, Banknote } from "lucide-react"
 
 type Transaction = {
   id: string;
@@ -25,6 +25,13 @@ type Transaction = {
   status: string;
   email?: string;
   group?: string;
+};
+
+type Loan = {
+  id: string;
+  amount: string;
+  status: 'Outstanding' | 'Paid' | 'Approved' | 'Pending' | string;
+  email?: string;
 };
 
 const parseAmount = (amount: string): number => {
@@ -82,6 +89,7 @@ export default function Dashboard() {
   const [memberSummary, setMemberSummary] = useState({
       myContributions: 0,
       myWithdrawals: 0,
+      myApprovedLoans: 0,
   });
   const [myTransactions, setMyTransactions] = useState<Transaction[]>([]);
 
@@ -118,7 +126,10 @@ export default function Dashboard() {
 
     } else if (email) {
       const allTransactions = await getCollection('transactions') as Transaction[];
+      const allLoans = await getCollection('loans') as Loan[];
       const userTransactions = allTransactions.filter(tx => tx.email === email);
+      const userLoans = allLoans.filter(loan => loan.email === email);
+
 
       const myContributions = userTransactions
           .filter(tx => tx.type === 'Contribution' && (tx.status === 'Completed' || tx.status === 'Approved'))
@@ -128,7 +139,11 @@ export default function Dashboard() {
           .filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Completed' || tx.status === 'Approved'))
           .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
       
-      setMemberSummary({ myContributions, myWithdrawals });
+      const myApprovedLoans = userLoans
+            .filter(loan => loan.status === 'Approved' || loan.status === 'Paid' || loan.status === 'Outstanding')
+            .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
+
+      setMemberSummary({ myContributions, myWithdrawals, myApprovedLoans });
       setMyTransactions(userTransactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5));
     }
     setLoading(false);
@@ -262,11 +277,12 @@ export default function Dashboard() {
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Next Contribution Due</CardTitle>
+                    <CardTitle className="text-sm font-medium">Total Approved Loans</CardTitle>
+                    <Banknote className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">August 1, 2024</div>
-                    <p className="text-xs text-muted-foreground">GH₵250.00 will be auto-debited</p>
+                    <div className="text-2xl font-bold">{formatCurrency(memberSummary.myApprovedLoans)}</div>
+                    <p className="text-xs text-muted-foreground">All-time approved loans</p>
                 </CardContent>
             </Card>
         </div>
