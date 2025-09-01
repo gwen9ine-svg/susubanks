@@ -12,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { getCollection, seedDatabase } from "@/services/firestore"
-import { HandCoins, Landmark, Banknote } from "lucide-react"
+import { HandCoins, Landmark, Banknote, Users, TrendingUp, TrendingDown } from "lucide-react"
 
 type Transaction = {
   id: string;
@@ -32,6 +32,17 @@ type Loan = {
   amount: string;
   status: 'Outstanding' | 'Paid' | 'Approved' | 'Pending' | string;
   email?: string;
+  group?: string;
+};
+
+type Member = {
+    id: string;
+    group?: string;
+    email: string;
+    name: string;
+    avatar: string;
+    status: string;
+    contributed: string;
 };
 
 const parseAmount = (amount: string): number => {
@@ -91,6 +102,12 @@ export default function Dashboard() {
       myWithdrawals: 0,
       myApprovedLoans: 0,
   });
+  const [groupSummary, setGroupSummary] = useState({
+      groupName: '',
+      groupContributions: 0,
+      groupWithdrawals: 0,
+      groupLoans: 0,
+  });
   const [myTransactions, setMyTransactions] = useState<Transaction[]>([]);
 
   const handleSeed = async () => {
@@ -127,9 +144,13 @@ export default function Dashboard() {
     } else if (email) {
       const allTransactions = await getCollection('transactions') as Transaction[];
       const allLoans = await getCollection('loans') as Loan[];
+      const allMembers = await getCollection('members') as Member[];
+
+      const currentUser = allMembers.find(m => m.email === email);
+      const userGroup = currentUser?.group;
+
       const userTransactions = allTransactions.filter(tx => tx.email === email);
       const userLoans = allLoans.filter(loan => loan.email === email);
-
 
       const myContributions = userTransactions
           .filter(tx => tx.type === 'Contribution' && (tx.status === 'Completed' || tx.status === 'Approved'))
@@ -145,6 +166,27 @@ export default function Dashboard() {
 
       setMemberSummary({ myContributions, myWithdrawals, myApprovedLoans });
       setMyTransactions(userTransactions.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5));
+
+      if(userGroup){
+         const groupContributions = allTransactions
+            .filter(tx => tx.group === userGroup && tx.type === 'Contribution' && (tx.status === 'Completed' || tx.status === 'Approved'))
+            .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+        const groupWithdrawals = allTransactions
+            .filter(tx => tx.group === userGroup && tx.type === 'Withdrawal' && (tx.status === 'Completed' || tx.status === 'Approved'))
+            .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+        const groupLoans = allLoans
+            .filter(loan => loan.group === userGroup && (loan.status === 'Approved' || loan.status === 'Paid' || loan.status === 'Outstanding'))
+            .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
+
+        setGroupSummary({
+            groupName: userGroup.replace('group', 'Group '),
+            groupContributions,
+            groupWithdrawals,
+            groupLoans
+        });
+      }
     }
     setLoading(false);
   }
@@ -286,6 +328,44 @@ export default function Dashboard() {
                 </CardContent>
             </Card>
         </div>
+        
+        {groupSummary.groupName && (
+        <div className="space-y-4">
+            <h2 className="text-xl font-bold">{groupSummary.groupName} Summary</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Group Contributions</CardTitle>
+                        <TrendingUp className="h-4 w-4 text-muted-foreground text-green-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(groupSummary.groupContributions)}</div>
+                        <p className="text-xs text-muted-foreground">Total contributions from your group</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Group Withdrawals</CardTitle>
+                        <TrendingDown className="h-4 w-4 text-muted-foreground text-red-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(groupSummary.groupWithdrawals)}</div>
+                        <p className="text-xs text-muted-foreground">Total withdrawals from your group</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Group Loans</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(groupSummary.groupLoans)}</div>
+                        <p className="text-xs text-muted-foreground">Total approved loans in your group</p>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+        )}
 
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
