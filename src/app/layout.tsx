@@ -67,6 +67,10 @@ const adminNavItems = [
   { href: '/admin/add-member', icon: UserPlus, label: 'Add Member' },
 ]
 
+const memberNavItems = [
+    { href: '/auth/register', icon: UserPlus, label: 'Invite Member' },
+];
+
 
 function AppLayout({
   children,
@@ -159,7 +163,7 @@ function AppLayout({
                   </SidebarMenuItem>
                 )
               })}
-              {userRole === 'admin' && (
+              {userRole === 'admin' ? (
                 <>
                   <SidebarMenuItem>
                     <Badge variant="outline" className="w-full justify-start group-data-[collapsible=icon]:hidden mt-4 mb-2 -ml-1">Admin</Badge>
@@ -180,20 +184,25 @@ function AppLayout({
                       </Link>
                     </SidebarMenuItem>
                   ))}
-                  <SidebarMenuItem>
-                      <Link href="/admin/invite-member" passHref>
+                </>
+              ) : (
+                <>
+                  {memberNavItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <Link href={item.href} passHref>
                         <SidebarMenuButton
                           asChild
-                          isActive={isActive("/admin/invite-member")}
-                          tooltip={{ children: "Invite Member" }}
+                          isActive={isActive(item.href)}
+                          tooltip={{ children: item.label }}
                         >
-                            <span>
-                            <UserPlus />
-                            <span>Invite Member</span>
+                          <span>
+                            <item.icon />
+                            <span>{item.label}</span>
                           </span>
                         </SidebarMenuButton>
                       </Link>
                     </SidebarMenuItem>
+                  ))}
                 </>
               )}
             </SidebarMenu>
