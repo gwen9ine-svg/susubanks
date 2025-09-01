@@ -93,7 +93,7 @@ export default function LoginPage() {
         <div className="mx-auto mb-4">
           <SusuLogo isBank={true} />
         </div>
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl">Welcome to Susu Bank</CardTitle>
         <CardDescription>Securely sign in to your account. Use the default credentials or create an account.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
