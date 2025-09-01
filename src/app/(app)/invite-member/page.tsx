@@ -24,16 +24,21 @@ export default function InviteMemberPage() {
     const { toast } = useToast();
     
     const [fullName, setFullName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
+    const [address, setAddress] = useState('');
+    const [maritalStatus, setMaritalStatus] = useState('');
+    const [idCard, setIdCard] = useState('');
+    const [sourceOfIncome, setSourceOfIncome] = useState('');
     const [group, setGroup] = useState('');
     const [password, setPassword] = useState('password123'); // Default password
 
     const handleRegisterMember = async () => {
-        if (!fullName || !email || !group) {
+        if (!fullName || !email || !group || !username || !address || !maritalStatus || !idCard || !sourceOfIncome) {
             toast({
                 title: "Validation Error",
-                description: "Please fill out the full name, email, and group for the new member.",
+                description: "Please fill out all fields for the new member.",
                 variant: "destructive",
             });
             return;
@@ -43,8 +48,13 @@ export default function InviteMemberPage() {
         const newMember = {
             id: uuidv4(),
             name: fullName,
+            username: username,
             email,
             phone,
+            address,
+            maritalStatus,
+            idCard,
+            sourceOfIncome,
             group,
             password, // In a real app, this should be handled more securely
             role: "Member",
@@ -61,8 +71,13 @@ export default function InviteMemberPage() {
             });
             // Reset form
             setFullName('');
+            setUsername('');
             setEmail('');
             setPhone('');
+            setAddress('');
+            setMaritalStatus('');
+            setIdCard('');
+            setSourceOfIncome('');
             setGroup('');
         } catch (error) {
             console.error("Error registering member:", error);
@@ -99,6 +114,18 @@ export default function InviteMemberPage() {
                             />
                         </div>
                          <div className="space-y-2">
+                            <Label htmlFor="username">Username</Label>
+                            <Input 
+                                id="username" 
+                                placeholder="e.g., ama_s" 
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <Input 
                                 id="email" 
@@ -109,8 +136,6 @@ export default function InviteMemberPage() {
                                 disabled={isLoading}
                             />
                         </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number (Optional)</Label>
                             <Input 
@@ -119,6 +144,54 @@ export default function InviteMemberPage() {
                                 placeholder="+233 12 345 6789" 
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="address">Residential Address</Label>
+                        <Input 
+                            id="address" 
+                            placeholder="123 Main St, Accra" 
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            disabled={isLoading}
+                        />
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="marital-status">Marital Status</Label>
+                            <Select onValueChange={setMaritalStatus} value={maritalStatus} disabled={isLoading}>
+                                <SelectTrigger id="marital-status">
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Single">Single</SelectItem>
+                                    <SelectItem value="Married">Married</SelectItem>
+                                    <SelectItem value="Divorced">Divorced</SelectItem>
+                                    <SelectItem value="Widowed">Widowed</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="id-card">ID Card Number</Label>
+                            <Input 
+                                id="id-card" 
+                                placeholder="GHA-123456789-0" 
+                                value={idCard}
+                                onChange={(e) => setIdCard(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label htmlFor="source-of-income">Source of Income</Label>
+                            <Input 
+                                id="source-of-income" 
+                                placeholder="e.g., Salary, Business" 
+                                value={sourceOfIncome}
+                                onChange={(e) => setSourceOfIncome(e.target.value)}
                                 disabled={isLoading}
                             />
                         </div>
