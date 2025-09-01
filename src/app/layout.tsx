@@ -14,7 +14,8 @@ import {
   User,
   LogOut,
   ShieldCheck,
-  UserPlus
+  UserPlus,
+  Banknote
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -69,6 +70,7 @@ const adminNavItems = [
 
 const memberNavItems = [
   { href: '/invite-member', icon: UserPlus, label: 'Invite Member' },
+  { href: '/take-a-loan', icon: Banknote, label: 'Take a Loan' },
 ];
 
 
