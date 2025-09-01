@@ -80,7 +80,9 @@ export default function WithdrawalsPage() {
   // Member state
   const [myWithdrawals, setMyWithdrawals] = useState<Transaction[]>([]);
   const [memberSummary, setMemberSummary] = useState({
-    myTotalWithdrawals: 0
+    myTotalWithdrawals: 0,
+    myPendingWithdrawalsCount: 0,
+    myPendingWithdrawalsAmount: 0,
   });
 
   useEffect(() => {
@@ -129,7 +131,17 @@ export default function WithdrawalsPage() {
           .filter(c => c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved')
           .reduce((acc, c) => acc + parseAmount(c.amount), 0);
         
-        setMemberSummary({ myTotalWithdrawals });
+        const myPendingWithdrawals = myFilteredWithdrawals
+          .filter(c => c.status.toLowerCase() === 'pending' || c.status.toLowerCase() === 'processing');
+
+        const myPendingWithdrawalsCount = myPendingWithdrawals.length;
+        const myPendingWithdrawalsAmount = myPendingWithdrawals.reduce((acc, c) => acc + parseAmount(c.amount), 0);
+        
+        setMemberSummary({ 
+          myTotalWithdrawals,
+          myPendingWithdrawalsCount,
+          myPendingWithdrawalsAmount,
+        });
       }
       setLoading(false);
     }
@@ -241,14 +253,26 @@ export default function WithdrawalsPage() {
         </Button>
       </div>
 
-       <Card>
-          <CardHeader>
-              <CardTitle>My Total Withdrawals</CardTitle>
-          </CardHeader>
-          <CardContent>
-              <p className="text-3xl font-bold">{formatCurrency(memberSummary.myTotalWithdrawals)}</p>
-          </CardContent>
-      </Card>
+       <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Approved Withdrawals</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold">{formatCurrency(memberSummary.myTotalWithdrawals)}</p>
+                <p className="text-xs text-muted-foreground">All-time approved withdrawals</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Pending Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold">{formatCurrency(memberSummary.myPendingWithdrawalsAmount)}</p>
+                <p className="text-xs text-muted-foreground">{memberSummary.myPendingWithdrawalsCount} request(s) awaiting approval</p>
+            </CardContent>
+          </Card>
+       </div>
       
       <Card>
         <CardHeader>
@@ -261,8 +285,8 @@ export default function WithdrawalsPage() {
                         <TableHead>Reference</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -271,8 +295,8 @@ export default function WithdrawalsPage() {
                           <TableCell>{item.ref}</TableCell>
                           <TableCell className="font-medium">{item.desc || item.type}</TableCell>
                           <TableCell>{item.amount}</TableCell>
-                          <TableCell>{getStatusBadge(item.status)}</TableCell>
                           <TableCell>{item.date}</TableCell>
+                          <TableCell>{getStatusBadge(item.status)}</TableCell>
                       </TableRow>
                     )) : (
                       <TableRow>
