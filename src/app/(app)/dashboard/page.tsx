@@ -276,9 +276,6 @@ export default function Dashboard() {
                     <CardTitle>My Recent Transactions</CardTitle>
                     <CardDescription>A quick look at your latest activity.</CardDescription>
                 </div>
-                <Button asChild variant="outline">
-                    <Link href="/transactions">View All</Link>
-                </Button>
             </CardHeader>
             <CardContent>
                 <Table>
