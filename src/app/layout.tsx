@@ -13,7 +13,8 @@ import {
   Landmark,
   User,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -63,6 +64,7 @@ const navItems = [
 const adminNavItems = [
   { href: '/admin/users', icon: Users2, label: 'Registered Users' },
   { href: '/admin/transactions', icon: ShieldCheck, label: 'User Requests' },
+  { href: '/admin/add-member', icon: UserPlus, label: 'Add Member' },
 ]
 
 

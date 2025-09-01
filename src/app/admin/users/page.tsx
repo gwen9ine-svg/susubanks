@@ -20,12 +20,18 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
-import { addDocument, getCollection, updateDocument } from "@/services/firestore";
+import { getCollection, updateDocument } from "@/services/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from 'uuid';
+import Link from "next/link";
 
 type Member = {
   id: string;
@@ -58,6 +64,7 @@ type Loan = {
 };
 
 const parseAmount = (amount: string): number => {
+    if (!amount || typeof amount === 'number') return amount || 0;
     return parseFloat(amount.replace(/[^0-9.-]+/g,""));
 }
 
@@ -90,12 +97,6 @@ export default function UsersDirectoryPage() {
         { title: "Total Loans Given", value: formatCurrency(0) },
     ]);
     const { toast } = useToast();
-    const [newMemberName, setNewMemberName] = useState('');
-    const [newMemberEmail, setNewMemberEmail] = useState('');
-    const [newMemberPhone, setNewMemberPhone] = useState('');
-    const [newMemberAddress, setNewMemberAddress] = useState('');
-    const [newMemberMaritalStatus, setNewMemberMaritalStatus] = useState('');
-    const [newMemberRole, setNewMemberRole] = useState('');
     const [pendingUsers, setPendingUsers] = useState<Member[]>([]);
 
 
@@ -138,53 +139,6 @@ export default function UsersDirectoryPage() {
     useEffect(() => {
       fetchData();
     }, []);
-
-    const handleAddMember = async () => {
-        if (!newMemberName || !newMemberEmail || !newMemberRole) {
-            toast({
-                title: "Validation Error",
-                description: "Please provide name, email, and role for the new member.",
-                variant: "destructive",
-            });
-            return;
-        }
-
-        const newMember = {
-            id: uuidv4(),
-            name: newMemberName,
-            email: newMemberEmail,
-            phone: newMemberPhone,
-            address: newMemberAddress,
-            maritalStatus: newMemberMaritalStatus,
-            role: newMemberRole,
-            status: "Active",
-            contributed: "GH₵0.00",
-            avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
-            password: "password123", // default password
-        };
-
-        try {
-            await addDocument('members', newMember, newMember.id);
-            toast({
-                title: "Member Added",
-                description: `${newMemberName} has been added to the directory.`,
-            });
-            setNewMemberName('');
-            setNewMemberEmail('');
-            setNewMemberPhone('');
-            setNewMemberAddress('');
-            setNewMemberMaritalStatus('');
-            setNewMemberRole('');
-            await fetchData(); // Refresh user list
-        } catch (error) {
-            console.error("Error adding member:", error);
-            toast({
-                title: "Error",
-                description: "Could not add the new member. Please try again.",
-                variant: "destructive",
-            });
-        }
-    };
     
     const handleUserApproval = async (userId: string, newStatus: "Active" | "Rejected") => {
         try {
@@ -327,49 +281,33 @@ export default function UsersDirectoryPage() {
                             </Tabs>
                         </CardContent>
                     </Card>
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Add New Member</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <Input placeholder="Full Name" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)} />
-                                <Input placeholder="Email" type="email" value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} />
-                                <Input placeholder="Phone Number" value={newMemberPhone} onChange={(e) => setNewMemberPhone(e.target.value)} />
-                                <Input placeholder="Residential Address" value={newMemberAddress} onChange={(e) => setNewMemberAddress(e.target.value)} />
-                                <Select onValueChange={setNewMemberMaritalStatus} value={newMemberMaritalStatus}><SelectTrigger><SelectValue placeholder="Select marital status" /></SelectTrigger><SelectContent><SelectItem value="Single">Single</SelectItem><SelectItem value="Married">Married</SelectItem><SelectItem value="Divorced">Divorced</SelectItem><SelectItem value="Widowed">Widowed</SelectItem></SelectContent></Select>
-                                <Select onValueChange={setNewMemberRole} value={newMemberRole}><SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger><SelectContent><SelectItem value="Member">Member</SelectItem><SelectItem value="Admin">Admin</SelectItem></SelectContent></Select>
-                                <Button onClick={handleAddMember}>Add Member</Button>
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>New User Approval</CardTitle>
-                                <CardDescription>Review and approve new member requests.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                {loading ? (
-                                    <p>Loading requests...</p>
-                                ) : pendingUsers.length > 0 ? (
-                                    pendingUsers.map(user => (
-                                        <div key={user.id} className="flex items-center justify-between">
-                                            <div>
-                                                <p className="font-medium">{user.name}</p>
-                                                <p className="text-sm text-muted-foreground">{user.email}</p>
-                                                <p className="text-sm text-muted-foreground">Group: {user.group ? user.group.replace('group', 'Group ') : 'N/A'}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button onClick={() => handleUserApproval(user.id, 'Active')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Approve</Button>
-                                                <Button onClick={() => handleUserApproval(user.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
-                                            </div>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>New User Approval</CardTitle>
+                            <CardDescription>Review and approve new member requests.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {loading ? (
+                                <p>Loading requests...</p>
+                            ) : pendingUsers.length > 0 ? (
+                                pendingUsers.map(user => (
+                                    <div key={user.id} className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium">{user.name}</p>
+                                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                                            <p className="text-sm text-muted-foreground">Group: {user.group ? user.group.replace('group', 'Group ') : 'N/A'}</p>
                                         </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-muted-foreground text-center">No new user requests.</p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
+                                        <div className="flex gap-2">
+                                            <Button onClick={() => handleUserApproval(user.id, 'Active')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Approve</Button>
+                                            <Button onClick={() => handleUserApproval(user.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center">No new user requests.</p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
