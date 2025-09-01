@@ -211,7 +211,7 @@ const MemberRequestsTable = ({ members, handleUserApproval }: MemberTableProps) 
         return (
             <Card>
                 <CardHeader>
-                    <CardTitle>New Member Requests</CardTitle>
+                    <CardTitle>New user Approval</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground text-center py-4">No new member requests found.</p>
@@ -222,7 +222,7 @@ const MemberRequestsTable = ({ members, handleUserApproval }: MemberTableProps) 
     return (
     <Card>
         <CardHeader>
-            <CardTitle>New Member Requests</CardTitle>
+            <CardTitle>New user Approval</CardTitle>
         </CardHeader>
         <CardContent>
             <Table>
