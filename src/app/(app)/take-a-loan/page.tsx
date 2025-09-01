@@ -37,8 +37,13 @@ type Loan = {
   reason: string;
   group: string;
   date: string;
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Paid' | string;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Paid' | 'Outstanding' | string;
 };
+
+const parseAmount = (amount: string): number => {
+    if (!amount) return 0;
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
 
 const formatCurrency = (value: number): string => {
     if (isNaN(value)) return '';
@@ -53,6 +58,7 @@ const getStatusBadge = (status: string) => {
         case 'pending': 
             return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
         case 'rejected': return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
+        case 'outstanding': return <Badge className="bg-blue-100 text-blue-800">{status}</Badge>;
         default: return <Badge variant="outline">{status}</Badge>;
     }
 }
@@ -60,7 +66,9 @@ const getStatusBadge = (status: string) => {
 export default function TakeLoanPage() {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [isRepaying, setIsRepaying] = useState(false);
 
+    // Loan request form state
     const [loanAmount, setLoanAmount] = useState('');
     const [loanReason, setLoanReason] = useState('');
     const [repaymentPlan, setRepaymentPlan] = useState('');
@@ -69,9 +77,13 @@ export default function TakeLoanPage() {
     const [guarantorPhone, setGuarantorPhone] = useState('');
     const [group, setGroup] = useState('');
 
+    // Repayment form state
+    const [repaymentAmount, setRepaymentAmount] = useState('');
+
     const [userEmail, setUserEmail] = useState<string | null>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [myLoans, setMyLoans] = useState<Loan[]>([]);
+    const [outstandingLoan, setOutstandingLoan] = useState(0);
 
     useEffect(() => {
         const email = localStorage.getItem('userEmail');
@@ -87,6 +99,11 @@ export default function TakeLoanPage() {
             .filter(loan => loan.email === userEmail)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setMyLoans(userLoans);
+
+        const outstanding = userLoans
+            .filter(loan => loan.status === 'Approved' || loan.status === 'Paid' || loan.status === 'Outstanding')
+            .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
+        setOutstandingLoan(outstanding);
     }
 
     useEffect(() => {
@@ -167,12 +184,67 @@ export default function TakeLoanPage() {
             setIsLoading(false);
         }
     };
+    
+    const handleRepayment = async () => {
+        const amount = parseFloat(repaymentAmount);
+        if (!repaymentAmount || isNaN(amount) || amount <= 0) {
+            toast({
+                title: "Invalid Amount",
+                description: "Please enter a valid repayment amount.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (amount > outstandingLoan) {
+             toast({
+                title: "Invalid Amount",
+                description: "Repayment amount cannot be greater than your outstanding loan.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsRepaying(true);
+
+        const repaymentTransaction = {
+            ref: `REPAY-${new Date().getFullYear()}-${uuidv4().split('-')[0].toUpperCase()}`,
+            member: userName,
+            email: userEmail,
+            type: 'Contribution',
+            amount: formatCurrency(amount),
+            date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            status: 'Pending',
+            desc: 'Loan Repayment',
+        };
+
+        try {
+            await addDocument('transactions', repaymentTransaction);
+            toast({
+                title: "Repayment Submitted",
+                description: "Your loan repayment has been submitted for processing.",
+            });
+            setRepaymentAmount('');
+            // We don't update the outstanding loan here. It will be updated when an admin approves the transaction.
+            // You can fetch data again if you want to reflect the pending transaction somewhere.
+        } catch (error) {
+             console.error("Error submitting repayment:", error);
+            toast({
+                title: "Repayment Error",
+                description: "Could not submit your repayment. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsRepaying(false);
+        }
+    }
+
 
     return (
         <div className="space-y-6">
             <h1 className="text-2xl font-bold">Request a Loan</h1>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-6">
                     <Card>
                         <CardHeader>
                             <CardTitle>Loan Application Form</CardTitle>
@@ -273,7 +345,33 @@ export default function TakeLoanPage() {
                         </CardFooter>
                     </Card>
                 </div>
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 space-y-6">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Loan Repayment</CardTitle>
+                            <CardDescription>Make a payment towards your outstanding loan.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <p className="text-sm text-muted-foreground">Outstanding Loan Balance</p>
+                                <p className="text-2xl font-bold">{formatCurrency(outstandingLoan)}</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="repayment-amount">Repayment Amount (GHS)</Label>
+                                <Input 
+                                    id="repayment-amount"
+                                    type="number"
+                                    placeholder="Enter amount"
+                                    value={repaymentAmount}
+                                    onChange={(e) => setRepaymentAmount(e.target.value)}
+                                    disabled={isRepaying || outstandingLoan === 0}
+                                />
+                            </div>
+                             <Button onClick={handleRepayment} disabled={isRepaying || outstandingLoan === 0}>
+                                {isRepaying ? 'Processing...' : 'Make Repayment'}
+                            </Button>
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <CardTitle>My Loan History</CardTitle>
