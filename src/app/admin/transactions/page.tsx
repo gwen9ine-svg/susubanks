@@ -33,6 +33,7 @@ import { deleteDocument, getCollection, updateDocument, writeBatch } from "@/ser
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
 import { doc } from "firebase/firestore";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Transaction = {
   id: string;
@@ -52,6 +53,15 @@ type Loan = {
     memberName: string;
     status: string;
     reason?: string;
+};
+
+type Member = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  status: 'Active' | 'Pending' | 'Rejected' | string;
+  group?: string;
 };
 
 
@@ -80,6 +90,7 @@ const getStatusBadge = (status: string) => {
         case 'Approved':
         case 'Completed':
         case 'Paid':
+        case 'Active':
             return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
         case 'Pending': 
         case 'Outstanding':
@@ -165,10 +176,65 @@ const GenericTable = ({ items, handleItemStatus, handleDeleteItem, handleAcceptA
     </Card>
 )};
 
+type MemberTableProps = {
+    members: Member[];
+    handleUserApproval: (userId: string, newStatus: 'Active' | 'Rejected') => void;
+};
+
+const MemberRequestsTable = ({ members, handleUserApproval }: MemberTableProps) => (
+    <Card>
+        <CardHeader>
+            <CardTitle>New Member Requests</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Member</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Group</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Action</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {members.length > 0 ? members.map(user => (
+                        <TableRow key={user.id}>
+                            <TableCell>
+                                <div className="flex items-center gap-3">
+                                    <Avatar>
+                                        <AvatarImage src={user.avatar} data-ai-hint="person avatar"/>
+                                        <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="font-medium">{user.name}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>{user.group ? user.group.replace('group', 'Group ') : 'N/A'}</TableCell>
+                            <TableCell>{getStatusBadge(user.status)}</TableCell>
+                            <TableCell>
+                                <div className="flex gap-2">
+                                    <Button onClick={() => handleUserApproval(user.id, 'Active')} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">Approve</Button>
+                                    <Button onClick={() => handleUserApproval(user.id, 'Rejected')} variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">Decline</Button>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    )) : (
+                        <TableRow>
+                            <TableCell colSpan={5} className="text-center">No new member requests.</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </CardContent>
+    </Card>
+);
+
 
 export default function AdminTransactionsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loans, setLoans] = useState<Loan[]>([]);
+    const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
     const [summaryCards, setSummaryCards] = useState([
         { title: "Total Deposits", value: formatCurrency(0) },
         { title: "Total Withdrawals", value: formatCurrency(0) },
@@ -180,9 +246,11 @@ export default function AdminTransactionsPage() {
     async function fetchData() {
         const transactionData = await getCollection('transactions') as Transaction[];
         const loanData = await getCollection('loans') as Loan[];
+        const memberData = await getCollection('members') as Member[];
 
         setTransactions(transactionData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
         setLoans(loanData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setPendingMembers(memberData.filter(m => m.status === 'Pending'));
         
         const totalDeposits = transactionData
             .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
@@ -228,6 +296,24 @@ export default function AdminTransactionsPage() {
         }
     };
     
+    const handleUserApproval = async (userId: string, newStatus: "Active" | "Rejected") => {
+        try {
+            await updateDocument('members', userId, { status: newStatus });
+            toast({
+                title: `User ${newStatus === 'Active' ? 'Approved' : 'Rejected'}`,
+                description: `The user has been ${newStatus === 'Active' ? 'approved' : 'rejected'}.`
+            });
+            fetchData(); // Refresh data
+        } catch (error) {
+            console.error("Error updating user status:", error);
+            toast({
+                title: "Update Error",
+                description: "Could not update the user status. Please try again.",
+                variant: "destructive"
+            });
+        }
+    };
+
     const handleDeleteItem = async (itemId: string, collection: 'transactions' | 'loans') => {
         try {
             await deleteDocument(collection, itemId);
@@ -356,6 +442,7 @@ export default function AdminTransactionsPage() {
                             <TabsTrigger value="deposits">Deposits</TabsTrigger>
                             <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
                             <TabsTrigger value="loan_requests">Loan Requests</TabsTrigger>
+                            <TabsTrigger value="new_members">New Members</TabsTrigger>
                         </TabsList>
                         <TabsContent value="all">
                             <GenericTable items={allItems} handleItemStatus={handleItemStatus} handleDeleteItem={handleDeleteItem} handleAcceptAll={() => { toast({ title: "Please use specific tabs for bulk actions."}) }} handleDeclineAll={() => { toast({ title: "Please use specific tabs for bulk actions."}) }} />
@@ -369,9 +456,15 @@ export default function AdminTransactionsPage() {
                          <TabsContent value="loan_requests">
                              <GenericTable items={loanRequests} handleItemStatus={handleItemStatus} handleDeleteItem={handleDeleteItem} handleAcceptAll={() => handleAcceptAll('loans')} handleDeclineAll={() => handleDeclineAll('loans')} isLoanTable={true} />
                         </TabsContent>
+                        <TabsContent value="new_members">
+                            <MemberRequestsTable members={pendingMembers} handleUserApproval={handleUserApproval} />
+                        </TabsContent>
                     </Tabs>
                 </div>
             </div>
         </div>
     )
 }
+
+
+    
