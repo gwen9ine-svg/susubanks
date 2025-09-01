@@ -106,10 +106,19 @@ export default function TakeLoanPage() {
         }
         
         const amount = parseFloat(loanAmount);
-        if (isNaN(amount) || amount <= 0) {
+        if (isNaN(amount) || amount < 1000) {
             toast({
                 title: "Invalid Amount",
-                description: "Please enter a valid loan amount.",
+                description: "Minimum loan amount is GH₵1,000.00.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (amount % 500 !== 0) {
+             toast({
+                title: "Invalid Amount",
+                description: "Loan amount must be in increments of 500 (e.g., 1000, 1500, 2000).",
                 variant: "destructive",
             });
             return;
@@ -182,6 +191,8 @@ export default function TakeLoanPage() {
                                         value={loanAmount}
                                         onChange={(e) => setLoanAmount(e.target.value)}
                                         disabled={isLoading}
+                                        min="1000"
+                                        step="500"
                                     />
                                 </div>
                                  <div className="space-y-2">
