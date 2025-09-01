@@ -67,8 +67,7 @@ const adminNavItems = [
   { href: '/admin/add-member', icon: UserPlus, label: 'Add Member' },
 ]
 
-const memberNavItems = [
-    { href: '/auth/register', icon: UserPlus, label: 'Invite Member' },
+const memberNavItems: any[] = [
 ];
 
 
