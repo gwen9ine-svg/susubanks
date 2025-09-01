@@ -19,8 +19,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { getCollection } from '@/services/firestore';
+import { addDocument, getCollection } from '@/services/firestore';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 type Transaction = {
   id: string;
@@ -68,6 +73,7 @@ export default function WithdrawalsPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   
   // Admin state
   const [allWithdrawals, setAllWithdrawals] = useState<Transaction[]>([]);
@@ -85,71 +91,126 @@ export default function WithdrawalsPage() {
     myPendingWithdrawalsAmount: 0,
   });
 
-  useEffect(() => {
+  // Withdrawal Form State
+  const [withdrawalAmount, setWithdrawalAmount] = useState('');
+  const [withdrawalDesc, setWithdrawalDesc] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  async function fetchData() {
+    setLoading(true);
     const role = localStorage.getItem('userRole');
     const email = localStorage.getItem('userEmail');
+    const name = localStorage.getItem('userName');
     setUserRole(role);
     setUserEmail(email);
-  }, []);
+    setUserName(name);
 
+    const transactionData = await getCollection('transactions') as Transaction[];
+    const withdrawalTransactions = transactionData.filter(tx => tx.type === 'Withdrawal')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (role === 'admin') {
+      setAllWithdrawals(withdrawalTransactions);
+
+      const groupTotals: Record<string, number> = {};
+      for (let i = 1; i <= 6; i++) {
+          const groupKey = `group${i}`;
+          groupTotals[groupKey] = withdrawalTransactions
+              .filter(c => c.group === groupKey && (c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved'))
+              .reduce((acc, c) => acc + parseAmount(c.amount), 0);
+      }
+      setGroupWithdrawals(groupTotals);
+
+      const totalWithdrawals = withdrawalTransactions
+          .filter(tx => tx.status === 'Completed' || tx.status === 'Approved')
+          .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+      
+      const pendingWithdrawals = withdrawalTransactions.filter(tx => tx.status.toLowerCase() === 'pending' || tx.status.toLowerCase() === 'processing');
+
+      setAdminSummary({
+        totalWithdrawals: totalWithdrawals,
+        pendingRequests: pendingWithdrawals.length,
+      });
+
+    } else if (email) {
+      const myFilteredWithdrawals = withdrawalTransactions.filter(tx => tx.email === email);
+      setMyWithdrawals(myFilteredWithdrawals);
+      
+      const myTotalWithdrawals = myFilteredWithdrawals
+        .filter(c => c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved')
+        .reduce((acc, c) => acc + parseAmount(c.amount), 0);
+      
+      const myPendingWithdrawals = myFilteredWithdrawals
+        .filter(c => c.status.toLowerCase() === 'pending' || c.status.toLowerCase() === 'processing');
+
+      const myPendingWithdrawalsCount = myPendingWithdrawals.length;
+      const myPendingWithdrawalsAmount = myPendingWithdrawals.reduce((acc, c) => acc + parseAmount(c.amount), 0);
+      
+      setMemberSummary({ 
+        myTotalWithdrawals,
+        myPendingWithdrawalsCount,
+        myPendingWithdrawalsAmount,
+      });
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      const transactionData = await getCollection('transactions') as Transaction[];
-      const withdrawalTransactions = transactionData.filter(tx => tx.type === 'Withdrawal')
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      if (userRole === 'admin') {
-        setAllWithdrawals(withdrawalTransactions);
-
-        const groupTotals: Record<string, number> = {};
-        for (let i = 1; i <= 6; i++) {
-            const groupKey = `group${i}`;
-            groupTotals[groupKey] = withdrawalTransactions
-                .filter(c => c.group === groupKey && (c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved'))
-                .reduce((acc, c) => acc + parseAmount(c.amount), 0);
-        }
-        setGroupWithdrawals(groupTotals);
-
-        const totalWithdrawals = withdrawalTransactions
-            .filter(tx => tx.status === 'Completed' || tx.status === 'Approved')
-            .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
-        
-        const pendingWithdrawals = withdrawalTransactions.filter(tx => tx.status.toLowerCase() === 'pending' || tx.status.toLowerCase() === 'processing');
-
-        setAdminSummary({
-          totalWithdrawals: totalWithdrawals,
-          pendingRequests: pendingWithdrawals.length,
-        });
-
-      } else if (userEmail) {
-        const myFilteredWithdrawals = withdrawalTransactions.filter(tx => tx.email === userEmail);
-        setMyWithdrawals(myFilteredWithdrawals);
-        
-        const myTotalWithdrawals = myFilteredWithdrawals
-          .filter(c => c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved')
-          .reduce((acc, c) => acc + parseAmount(c.amount), 0);
-        
-        const myPendingWithdrawals = myFilteredWithdrawals
-          .filter(c => c.status.toLowerCase() === 'pending' || c.status.toLowerCase() === 'processing');
-
-        const myPendingWithdrawalsCount = myPendingWithdrawals.length;
-        const myPendingWithdrawalsAmount = myPendingWithdrawals.reduce((acc, c) => acc + parseAmount(c.amount), 0);
-        
-        setMemberSummary({ 
-          myTotalWithdrawals,
-          myPendingWithdrawalsCount,
-          myPendingWithdrawalsAmount,
-        });
-      }
-      setLoading(false);
+    if (userRole === null) {
+      const role = localStorage.getItem('userRole');
+      const email = localStorage.getItem('userEmail');
+      const name = localStorage.getItem('userName');
+      setUserRole(role);
+      setUserEmail(email);
+      setUserName(name);
     }
-
     if (userRole) {
       fetchData();
     }
   }, [userRole, userEmail]);
+
+  const handleWithdrawalSubmit = async () => {
+    if (!withdrawalAmount || !withdrawalDesc || !userEmail || !userName) {
+        toast({
+            title: "Missing Information",
+            description: "Please enter an amount and description for your request.",
+            variant: "destructive",
+        });
+        return;
+    }
+    setIsSubmitting(true);
+    const newWithdrawal: Omit<Transaction, 'id' | 'avatar'> = {
+        ref: `WDR-${new Date().getFullYear()}-${uuidv4().split('-')[0].toUpperCase()}`,
+        member: userName,
+        email: userEmail,
+        type: 'Withdrawal',
+        amount: formatCurrency(parseFloat(withdrawalAmount)),
+        desc: withdrawalDesc,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        status: 'Pending',
+    };
+
+    try {
+        await addDocument('transactions', newWithdrawal);
+        toast({
+            title: 'Request Submitted',
+            description: 'Your withdrawal request has been submitted for approval.',
+        });
+        setWithdrawalAmount('');
+        setWithdrawalDesc('');
+        fetchData(); // Refresh data to show the new pending request
+    } catch (error) {
+        console.error("Error submitting withdrawal:", error);
+        toast({
+            title: "Submission Error",
+            description: "Could not submit your request. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
 
   if (loading) {
     return <p>Loading withdrawals...</p>;
@@ -270,6 +331,41 @@ export default function WithdrawalsPage() {
             </CardContent>
           </Card>
        </div>
+       
+        <Card>
+            <CardHeader>
+                <CardTitle>New Withdrawal Request</CardTitle>
+                <CardDescription>Request funds from your account. Requests are subject to admin approval.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2 sm:col-span-1">
+                        <Label htmlFor="withdrawal-amount">Amount (GHS)</Label>
+                        <Input
+                            id="withdrawal-amount"
+                            type="number"
+                            placeholder="e.g. 500"
+                            value={withdrawalAmount}
+                            onChange={(e) => setWithdrawalAmount(e.target.value)}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor="withdrawal-desc">Reason for Withdrawal</Label>
+                        <Textarea
+                            id="withdrawal-desc"
+                            placeholder="e.g., School fees, personal use, etc."
+                            value={withdrawalDesc}
+                            onChange={(e) => setWithdrawalDesc(e.target.value)}
+                            disabled={isSubmitting}
+                        />
+                    </div>
+                </div>
+                <Button onClick={handleWithdrawalSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </Button>
+            </CardContent>
+        </Card>
       
       <Card>
         <CardHeader>
