@@ -113,7 +113,7 @@ export default function Dashboard() {
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            </Header>
+            </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>
             </CardContent>
