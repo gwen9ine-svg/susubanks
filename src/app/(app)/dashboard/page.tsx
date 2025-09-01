@@ -1,3 +1,4 @@
+
 // src/app/(app)/dashboard/page.tsx
 
 "use client"
@@ -37,7 +38,6 @@ export default function Dashboard() {
   const [members, setMembers] = useState<any[]>([])
   const [summaryCards, setSummaryCards] = useState([
     { title: "Total Registered Users", value: "0", description: "Total number of registered users" },
-    { title: "Total Savings", value: formatCurrency(0), description: "Total contributions" },
   ])
 
   const [metricCards, setMetricCards] = useState([
@@ -53,17 +53,12 @@ export default function Dashboard() {
 
     const totalMembers = memberData.length;
     
-    const totalSavings = transactionData
-        .filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Completed' || tx.status === 'Approved'))
-        .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
-    
     const approvedWithdrawals = transactionData
         .filter((tx: any) => tx.type === 'Withdrawal' && (tx.status === 'Approved' || tx.status === 'Completed'))
         .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
 
     setSummaryCards([
         { title: "Total Registered Users", value: totalMembers.toString(), description: "Total number of registered users" },
-        { title: "Total Savings", value: formatCurrency(totalSavings), description: "Total contributions" },
     ]);
 
     setMetricCards([
