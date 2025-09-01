@@ -19,17 +19,16 @@ export default function AddMemberPage() {
     const [newMemberPhone, setNewMemberPhone] = useState('');
     const [newMemberAddress, setNewMemberAddress] = useState('');
     const [newMemberMaritalStatus, setNewMemberMaritalStatus] = useState('');
-    const [newMemberRole, setNewMemberRole] = useState('');
     const [nationality, setNationality] = useState('');
     const [group, setGroup] = useState('');
     const [sourceOfFunds, setSourceOfFunds] = useState('');
 
 
     const handleAddMember = async () => {
-        if (!newMemberName || !newMemberEmail || !newMemberRole || !group) {
+        if (!newMemberName || !newMemberEmail || !group) {
             toast({
                 title: "Validation Error",
-                description: "Please provide name, email, role, and group for the new member.",
+                description: "Please provide name, email, and group for the new member.",
                 variant: "destructive",
             });
             return;
@@ -44,7 +43,7 @@ export default function AddMemberPage() {
             phone: newMemberPhone,
             address: newMemberAddress,
             maritalStatus: newMemberMaritalStatus,
-            role: newMemberRole,
+            role: "Member",
             nationality: nationality,
             group: group,
             sourceOfFunds: sourceOfFunds,
@@ -66,7 +65,6 @@ export default function AddMemberPage() {
             setNewMemberPhone('');
             setNewMemberAddress('');
             setNewMemberMaritalStatus('');
-            setNewMemberRole('');
             setNationality('');
             setGroup('');
             setSourceOfFunds('');
@@ -126,18 +124,6 @@ export default function AddMemberPage() {
                             </Select>
                          </div>
                          <div className="space-y-2">
-                            <Label htmlFor="new-member-role">Role</Label>
-                            <Select onValueChange={setNewMemberRole} value={newMemberRole}>
-                                <SelectTrigger id="new-member-role"><SelectValue placeholder="Select role" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Member">Member</SelectItem>
-                                    <SelectItem value="Admin">Admin</SelectItem>
-                                </SelectContent>
-                            </Select>
-                         </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
                             <Label htmlFor="nationality">Nationality</Label>
                             <Select value={nationality} onValueChange={setNationality}>
                             <SelectTrigger id="nationality">
@@ -152,6 +138,8 @@ export default function AddMemberPage() {
                             </SelectContent>
                             </Select>
                         </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="group">Group</Label>
                             <Select value={group} onValueChange={setGroup}>
@@ -168,10 +156,10 @@ export default function AddMemberPage() {
                             </SelectContent>
                             </Select>
                         </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="source-of-funds">Source of Funds</Label>
-                        <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
+                        <div className="space-y-2">
+                            <Label htmlFor="source-of-funds">Source of Funds</Label>
+                            <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
+                        </div>
                     </div>
                     <Button onClick={handleAddMember} disabled={isLoading}>
                         {isLoading ? 'Adding Member...' : 'Add Member'}
