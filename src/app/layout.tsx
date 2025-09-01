@@ -180,6 +180,20 @@ function AppLayout({
                       </Link>
                     </SidebarMenuItem>
                   ))}
+                  <SidebarMenuItem>
+                      <Link href="/admin/invite-member" passHref>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive("/admin/invite-member")}
+                          tooltip={{ children: "Invite Member" }}
+                        >
+                            <span>
+                            <UserPlus />
+                            <span>Invite Member</span>
+                          </span>
+                        </SidebarMenuButton>
+                      </Link>
+                    </SidebarMenuItem>
                 </>
               )}
             </SidebarMenu>
