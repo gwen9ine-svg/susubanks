@@ -29,13 +29,14 @@ export default function InviteMemberPage() {
     const [phone, setPhone] = useState('');
     const [address, setAddress] = useState('');
     const [maritalStatus, setMaritalStatus] = useState('');
+    const [govIdType, setGovIdType] = useState('');
     const [idCard, setIdCard] = useState('');
     const [sourceOfIncome, setSourceOfIncome] = useState('');
     const [group, setGroup] = useState('');
     const [password, setPassword] = useState('password123'); // Default password
 
     const handleRegisterMember = async () => {
-        if (!fullName || !email || !group || !username || !address || !maritalStatus || !idCard || !sourceOfIncome) {
+        if (!fullName || !email || !group || !username || !address || !maritalStatus || !idCard || !sourceOfIncome || !govIdType) {
             toast({
                 title: "Validation Error",
                 description: "Please fill out all fields for the new member.",
@@ -53,6 +54,7 @@ export default function InviteMemberPage() {
             phone,
             address,
             maritalStatus,
+            govIdType,
             idCard,
             sourceOfIncome,
             group,
@@ -76,6 +78,7 @@ export default function InviteMemberPage() {
             setPhone('');
             setAddress('');
             setMaritalStatus('');
+            setGovIdType('');
             setIdCard('');
             setSourceOfIncome('');
             setGroup('');
@@ -174,6 +177,32 @@ export default function InviteMemberPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
+                            <Label htmlFor="source-of-income">Source of Income</Label>
+                            <Input 
+                                id="source-of-income" 
+                                placeholder="e.g., Salary, Business" 
+                                value={sourceOfIncome}
+                                onChange={(e) => setSourceOfIncome(e.target.value)}
+                                disabled={isLoading}
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="gov-id-type">ID Card Type</Label>
+                             <Select value={govIdType} onValueChange={setGovIdType} disabled={isLoading}>
+                                <SelectTrigger id="gov-id-type">
+                                    <SelectValue placeholder="Select ID type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ghana_card">Ghana Card</SelectItem>
+                                    <SelectItem value="passport">Passport</SelectItem>
+                                    <SelectItem value="drivers_license">Driver's License</SelectItem>
+                                    <SelectItem value="voters_id">Voter's ID</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
                             <Label htmlFor="id-card">ID Card Number</Label>
                             <Input 
                                 id="id-card" 
@@ -185,16 +214,6 @@ export default function InviteMemberPage() {
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                            <Label htmlFor="source-of-income">Source of Income</Label>
-                            <Input 
-                                id="source-of-income" 
-                                placeholder="e.g., Salary, Business" 
-                                value={sourceOfIncome}
-                                onChange={(e) => setSourceOfIncome(e.target.value)}
-                                disabled={isLoading}
-                            />
-                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="group">Group</Label>
                             <Select onValueChange={setGroup} value={group} disabled={isLoading}>
