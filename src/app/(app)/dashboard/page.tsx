@@ -36,7 +36,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [members, setMembers] = useState<any[]>([])
   const [summaryCards, setSummaryCards] = useState([
-    { title: "Total Members", value: "0", description: "Active members in the group" },
+    { title: "Total Registered Users", value: "0", description: "Total number of registered users" },
     { title: "Total Savings", value: formatCurrency(0), description: "Total contributions" },
   ])
 
@@ -62,7 +62,7 @@ export default function Dashboard() {
         .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
 
     setSummaryCards([
-        { title: "Total Members", value: totalMembers.toString(), description: "Active members in the group" },
+        { title: "Total Registered Users", value: totalMembers.toString(), description: "Total number of registered users" },
         { title: "Total Savings", value: formatCurrency(totalSavings), description: "Total contributions" },
     ]);
 
