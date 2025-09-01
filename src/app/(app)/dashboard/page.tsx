@@ -38,7 +38,6 @@ export default function Dashboard() {
   const [summaryCards, setSummaryCards] = useState([
     { title: "Total Members", value: "0", description: "Active members in the group" },
     { title: "Total Savings", value: formatCurrency(0), description: "Total contributions" },
-    { title: "Pending Withdrawals", value: formatCurrency(0), description: "Awaiting approval" },
   ])
 
   const [metricCards, setMetricCards] = useState([
@@ -58,10 +57,6 @@ export default function Dashboard() {
         .filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Completed' || tx.status === 'Approved'))
         .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
     
-    const pendingWithdrawals = transactionData
-        .filter((tx: any) => tx.type === 'Withdrawal' && tx.status === 'Pending')
-        .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
-
     const approvedWithdrawals = transactionData
         .filter((tx: any) => tx.type === 'Withdrawal' && (tx.status === 'Approved' || tx.status === 'Completed'))
         .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
@@ -69,7 +64,6 @@ export default function Dashboard() {
     setSummaryCards([
         { title: "Total Members", value: totalMembers.toString(), description: "Active members in the group" },
         { title: "Total Savings", value: formatCurrency(totalSavings), description: "Total contributions" },
-        { title: "Pending Withdrawals", value: formatCurrency(pendingWithdrawals), description: "Awaiting approval" },
     ]);
 
     setMetricCards([
@@ -99,7 +93,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {summaryCards.map((card, index) => (
           <Card key={index}>
             <CardHeader>
@@ -119,7 +113,7 @@ export default function Dashboard() {
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            </CardHeader>
+            </Header>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>
             </CardContent>
