@@ -1,0 +1,3 @@
+[submodule "susubanking"]
+	path = susubanking
+	url = https://github.com/gwen9ine-svg/susubanks.git
