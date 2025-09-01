@@ -28,10 +28,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import { deleteDocument, getCollection, updateDocument, writeBatch } from "@/services/firestore";
+import { deleteDocument, getCollection, updateDocument } from "@/services/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/lib/firebase";
-import { doc } from "firebase/firestore";
+import { doc, writeBatch } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Transaction = {
@@ -43,6 +43,7 @@ type Transaction = {
   amount: string;
   date: string;
   status: 'Approved' | 'Pending' | 'Rejected' | 'Completed' | string;
+  itemType: 'transaction';
 };
 
 type Loan = {
@@ -52,6 +53,7 @@ type Loan = {
     memberName: string;
     status: string;
     reason?: string;
+    itemType: 'loan';
 };
 
 type Member = {
@@ -63,7 +65,7 @@ type Member = {
   group?: string;
 };
 
-type HistoryItem = (Transaction | Loan) & { itemType: 'transaction' | 'loan' };
+type HistoryItem = (Transaction | Loan);
 
 const parseAmount = (amount: string): number => {
     return parseFloat(amount.replace(/[^0-9.-]+/g,""));
@@ -93,7 +95,6 @@ const getStatusBadge = (status: string) => {
         case 'Active':
             return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
         case 'Pending': 
-            return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
         case 'Outstanding':
             return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
         case 'Rejected': return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
@@ -277,12 +278,12 @@ export default function AdminTransactionsPage() {
     const { toast } = useToast();
 
     async function fetchData() {
-        const transactionData = await getCollection('transactions') as Transaction[];
-        const loanData = await getCollection('loans') as Loan[];
+        const transactionData = await getCollection('transactions') as Omit<Transaction, 'itemType'>[];
+        const loanData = await getCollection('loans') as Omit<Loan, 'itemType'>[];
         const memberData = await getCollection('members') as Member[];
 
-        setTransactions(transactionData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        setLoans(loanData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setTransactions(transactionData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(t => ({...t, itemType: 'transaction'})));
+        setLoans(loanData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(l => ({...l, itemType: 'loan'})));
         setPendingMembers(memberData.filter(m => m.status === 'Pending'));
         
         const totalDeposits = transactionData
@@ -396,17 +397,15 @@ export default function AdminTransactionsPage() {
     };
 
 
-    const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing')).map(tx => ({...tx, itemType: 'transaction'}));
-    const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing')).map(tx => ({...tx, itemType: 'transaction'}));
-    const loanRequests = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding').map(l => ({...l, itemType: 'loan'}));
+    const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing'));
+    const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing'));
+    const loanRequests = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding');
     
     const transactionHistory = transactions
-        .filter(t => ['Approved', 'Completed', 'Rejected'].includes(t.status))
-        .map(t => ({ ...t, itemType: 'transaction' as const }));
+        .filter(t => ['Approved', 'Completed', 'Rejected'].includes(t.status));
 
     const loanHistory = loans
-        .filter(l => ['Paid', 'Rejected'].includes(l.status))
-        .map(l => ({ ...l, itemType: 'loan' as const }));
+        .filter(l => ['Paid', 'Rejected'].includes(l.status));
 
     const combinedHistory: HistoryItem[] = [...transactionHistory, ...loanHistory]
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, writeBatch, doc, addDoc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, addDoc, setDoc, getDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 
 // A placeholder for a more robust data fetching service.
 // In a real app, you'd have more specific functions like `getUsers`, `getTransactions`, etc.
@@ -62,6 +62,8 @@ export async function updateDocument(collectionName: string, docId: string, data
 export async function seedDatabase() {
     const adminUserRef = doc(db, 'members', 'admin-user');
     const adminUserSnap = await getDoc(adminUserRef);
+     // We need to import writeBatch from firebase/firestore directly in the file that uses it.
+    const { writeBatch } = await import('firebase/firestore');
 
     // Only seed if the admin user doesn't exist.
     if (!adminUserSnap.exists()) {
@@ -119,7 +121,3 @@ export async function seedDatabase() {
     }
     return { success: true, message: 'Database already seeded.' };
 }
-
-export { writeBatch };
-
-    
