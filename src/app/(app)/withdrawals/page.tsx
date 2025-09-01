@@ -248,9 +248,6 @@ export default function WithdrawalsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">My Withdrawals</h1>
-        <Button variant="outline" asChild>
-          <Link href="/transactions">New Withdrawal</Link>
-        </Button>
       </div>
 
        <div className="grid gap-4 md:grid-cols-2">
