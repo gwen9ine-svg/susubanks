@@ -26,6 +26,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 
 type Transaction = {
   id: string;
@@ -94,6 +102,7 @@ export default function WithdrawalsPage() {
   // Withdrawal Form State
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalDesc, setWithdrawalDesc] = useState('');
+  const [withdrawalGroup, setWithdrawalGroup] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -171,14 +180,34 @@ export default function WithdrawalsPage() {
   }, [userRole, userEmail]);
 
   const handleWithdrawalSubmit = async () => {
-    if (!withdrawalAmount || !withdrawalDesc || !userEmail || !userName) {
+    const amount = parseFloat(withdrawalAmount);
+
+    if (!withdrawalAmount || !withdrawalDesc || !withdrawalGroup || !userEmail || !userName) {
         toast({
             title: "Missing Information",
-            description: "Please enter an amount and description for your request.",
+            description: "Please fill out all fields for your request.",
             variant: "destructive",
         });
         return;
     }
+    if (isNaN(amount) || amount < 500) {
+      toast({
+        title: "Invalid Amount",
+        description: "Minimum withdrawal amount is GH₵500.00.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (amount % 500 !== 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Withdrawal amount must be in increments of 500 (e.g., 500, 1000, 1500).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     const newWithdrawal: Omit<Transaction, 'id' | 'avatar'> = {
         ref: `WDR-${new Date().getFullYear()}-${uuidv4().split('-')[0].toUpperCase()}`,
@@ -187,6 +216,7 @@ export default function WithdrawalsPage() {
         type: 'Withdrawal',
         amount: formatCurrency(parseFloat(withdrawalAmount)),
         desc: withdrawalDesc,
+        group: withdrawalGroup,
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
         status: 'Pending',
     };
@@ -199,6 +229,7 @@ export default function WithdrawalsPage() {
         });
         setWithdrawalAmount('');
         setWithdrawalDesc('');
+        setWithdrawalGroup('');
         fetchData(); // Refresh data to show the new pending request
     } catch (error) {
         console.error("Error submitting withdrawal:", error);
@@ -338,28 +369,46 @@ export default function WithdrawalsPage() {
                 <CardDescription>Request funds from your account. Requests are subject to admin approval.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2 sm:col-span-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="space-y-2">
                         <Label htmlFor="withdrawal-amount">Amount (GHS)</Label>
                         <Input
                             id="withdrawal-amount"
                             type="number"
                             placeholder="e.g. 500"
+                            min="500"
+                            step="500"
                             value={withdrawalAmount}
                             onChange={(e) => setWithdrawalAmount(e.target.value)}
                             disabled={isSubmitting}
                         />
                     </div>
-                    <div className="space-y-2 sm:col-span-2">
-                        <Label htmlFor="withdrawal-desc">Reason for Withdrawal</Label>
-                        <Textarea
-                            id="withdrawal-desc"
-                            placeholder="e.g., School fees, personal use, etc."
-                            value={withdrawalDesc}
-                            onChange={(e) => setWithdrawalDesc(e.target.value)}
-                            disabled={isSubmitting}
-                        />
+                    <div className="space-y-2">
+                        <Label htmlFor="withdrawal-group">Group</Label>
+                        <Select onValueChange={setWithdrawalGroup} value={withdrawalGroup} disabled={isSubmitting}>
+                            <SelectTrigger id="withdrawal-group">
+                                <SelectValue placeholder="Select group" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="group1">Group 1</SelectItem>
+                                <SelectItem value="group2">Group 2</SelectItem>
+                                <SelectItem value="group3">Group 3</SelectItem>
+                                <SelectItem value="group4">Group 4</SelectItem>
+                                <SelectItem value="group5">Group 5</SelectItem>
+                                <SelectItem value="group6">Group 6</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="withdrawal-desc">Reason for Withdrawal</Label>
+                    <Textarea
+                        id="withdrawal-desc"
+                        placeholder="e.g., School fees, personal use, etc."
+                        value={withdrawalDesc}
+                        onChange={(e) => setWithdrawalDesc(e.target.value)}
+                        disabled={isSubmitting}
+                    />
                 </div>
                 <Button onClick={handleWithdrawalSubmit} disabled={isSubmitting}>
                     {isSubmitting ? 'Submitting...' : 'Submit Request'}
@@ -403,3 +452,4 @@ export default function WithdrawalsPage() {
     </div>
   );
 }
+
