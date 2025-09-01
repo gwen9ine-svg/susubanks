@@ -15,7 +15,8 @@ import {
   LogOut,
   ShieldCheck,
   UserPlus,
-  Banknote
+  Banknote,
+  HelpCircle,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarMenuBadge,
 } from '@/components/ui/sidebar'
 import { SusuLogo } from '@/components/icons'
 import { usePathname, useRouter } from 'next/navigation'
@@ -47,6 +49,7 @@ import React, { useEffect, useState } from 'react'
 import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { getCollection } from '@/services/firestore'
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -68,9 +71,17 @@ const adminNavItems = [
   { href: '/admin/add-member', icon: UserPlus, label: 'Add Member' },
 ]
 
-const memberNavItems = [
-  { href: '/invite-member', icon: UserPlus, label: 'Invite Member' },
-  { href: '/take-a-loan', icon: Banknote, label: 'Take a Loan' },
+type MemberNavItem = {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  notificationKey?: 'approvedInvites' | 'approvedLoans';
+};
+
+const memberNavItems: MemberNavItem[] = [
+  { href: '/invite-member', icon: UserPlus, label: 'Invite Member', notificationKey: 'approvedInvites' },
+  { href: '/take-a-loan', icon: Banknote, label: 'Take a Loan', notificationKey: 'approvedLoans' },
+  { href: '/help', icon: HelpCircle, label: 'Help' },
 ];
 
 
@@ -83,12 +94,25 @@ function AppLayout({
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState({ approvedInvites: 0, approvedLoans: 0 });
   
+  async function fetchNotifications() {
+      const email = localStorage.getItem('userEmail');
+      if (!email) return;
+
+      const allMembers = await getCollection('members');
+      const approvedInvites = allMembers.filter(member => member.invitedBy === email && member.status === 'Active').length;
+
+      const allLoans = await getCollection('loans');
+      const approvedLoans = allLoans.filter(loan => loan.email === email && loan.status === 'Approved').length;
+
+      setNotifications({ approvedInvites, approvedLoans });
+  }
+
   useEffect(() => {
     const role = localStorage.getItem('userRole');
     const name = localStorage.getItem('userName');
     
-    // If no user role and not on an auth page, redirect to login
     if (!role && !pathname.startsWith('/auth')) {
         router.push('/auth/login');
         return;
@@ -96,6 +120,10 @@ function AppLayout({
     
     setUserRole(role);
     setUserName(name);
+
+    if (role && role !== 'admin') {
+      fetchNotifications();
+    }
 
   }, [pathname, router]);
 
@@ -117,7 +145,6 @@ function AppLayout({
     return userName.substring(0, 2).toUpperCase();
   }
   
-  // Render auth layout for auth pages
   if (pathname.startsWith('/auth')) {
       return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -126,8 +153,6 @@ function AppLayout({
       );
   }
   
-  // Don't render layout if user is not set (and we are not on an auth page)
-  // This prevents a flash of the main layout before redirecting to login.
   if (!userRole) {
     return null;
   }
@@ -189,7 +214,9 @@ function AppLayout({
                 </>
               ) : (
                 <>
-                  {memberNavItems.map((item) => (
+                  {memberNavItems.map((item) => {
+                    const notificationCount = item.notificationKey ? notifications[item.notificationKey] : 0;
+                    return (
                     <SidebarMenuItem key={item.href}>
                       <Link href={item.href} passHref>
                         <SidebarMenuButton
@@ -200,11 +227,12 @@ function AppLayout({
                           <span>
                             <item.icon />
                             <span>{item.label}</span>
+                             {notificationCount > 0 && <SidebarMenuBadge>{notificationCount}</SidebarMenuBadge>}
                           </span>
                         </SidebarMenuButton>
                       </Link>
                     </SidebarMenuItem>
-                  ))}
+                  )})}
                 </>
               )}
             </SidebarMenu>
