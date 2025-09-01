@@ -38,10 +38,10 @@ export default function Dashboard() {
   const [members, setMembers] = useState<any[]>([])
   const [summaryCards, setSummaryCards] = useState([
     { title: "Total Registered Users", value: "0", description: "Total number of registered users" },
+    { title: "Total Groups", value: "6", description: "Number of active groups" },
   ])
 
   const [metricCards, setMetricCards] = useState([
-    { title: "Monthly Savings", value: "₵2,500" },
     { title: "Approved Withdrawals", value: formatCurrency(0) },
   ]);
 
@@ -59,10 +59,10 @@ export default function Dashboard() {
 
     setSummaryCards([
         { title: "Total Registered Users", value: totalMembers.toString(), description: "Total number of registered users" },
+        { title: "Total Groups", value: "6", description: "Number of active groups" },
     ]);
 
     setMetricCards([
-        { title: "Monthly Savings", value: "₵2,500" },
         { title: "Approved Withdrawals", value: formatCurrency(approvedWithdrawals) },
     ]);
     
@@ -88,7 +88,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {summaryCards.map((card, index) => (
           <Card key={index}>
             <CardHeader>
@@ -100,20 +100,14 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      {/* Metric Cards */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {metricCards.map((card, index) => (
-          <Card key={index}>
+         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">Approved Withdrawals</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{card.value}</div>
+              <div className="text-2xl font-bold">{metricCards[0].value}</div>
             </CardContent>
           </Card>
-        ))}
       </div>
 
       {/* Members Table */}
