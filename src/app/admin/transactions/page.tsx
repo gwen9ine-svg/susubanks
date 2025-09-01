@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MoreVertical, Check, X, Trash2 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,16 +106,30 @@ type TransactionTableProps = {
     handleDeclineAll: (collection: 'transactions' | 'loans') => void;
     handleDeleteItem: (itemId: string, collection: 'transactions' | 'loans') => void;
     isLoanTable?: boolean;
+    title: string;
 };
 
 
-const GenericTable = ({ items, handleItemStatus, handleDeleteItem, handleAcceptAll, handleDeclineAll, isLoanTable = false }: TransactionTableProps) => {
+const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcceptAll, handleDeclineAll, isLoanTable = false, title }: TransactionTableProps) => {
     const collection = isLoanTable ? 'loans' : 'transactions';
     
+    if (items.length === 0) {
+      return (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>{title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground text-center py-4">No {title.toLowerCase()} found.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
     <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{isLoanTable ? "Loan Requests" : "User Requests"}</CardTitle>
+            <CardTitle>{title}</CardTitle>
             <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => handleAcceptAll(collection)}>Accept All</Button>
                 <Button variant="destructive" size="sm" onClick={() => handleDeclineAll(collection)}>Decline All</Button>
@@ -405,11 +418,9 @@ export default function AdminTransactionsPage() {
         }
     };
 
-    const allItems = [...transactions, ...loans.map(l => ({...l, type: 'Loan', ref: l.reason || '', member: l.memberName, avatar: ''}))].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const deposits = transactions.filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit');
-    const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal');
-    const loanRequests = loans;
-
+    const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing'));
+    const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing'));
+    const loanRequests = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding');
 
     return (
         <div className="space-y-6">
@@ -430,36 +441,33 @@ export default function AdminTransactionsPage() {
             </div>
 
             <div className="grid gap-6">
-                <div>
-                    <Tabs defaultValue="all">
-                        <TabsList>
-                            <TabsTrigger value="all">All</TabsTrigger>
-                            <TabsTrigger value="deposits">Deposits</TabsTrigger>
-                            <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-                            <TabsTrigger value="loan_requests">Loan Requests</TabsTrigger>
-                            <TabsTrigger value="new_members">New Members</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="all">
-                            <GenericTable items={allItems} handleItemStatus={handleItemStatus} handleDeleteItem={handleDeleteItem} handleAcceptAll={() => { toast({ title: "Please use specific tabs for bulk actions."}) }} handleDeclineAll={() => { toast({ title: "Please use specific tabs for bulk actions."}) }} />
-                        </TabsContent>
-                         <TabsContent value="deposits">
-                             <GenericTable items={deposits} handleItemStatus={handleItemStatus} handleDeleteItem={handleDeleteItem} handleAcceptAll={() => handleAcceptAll('transactions')} handleDeclineAll={() => handleDeclineAll('transactions')} />
-                        </TabsContent>
-                         <TabsContent value="withdrawals">
-                             <GenericTable items={withdrawals} handleItemStatus={handleItemStatus} handleDeleteItem={handleDeleteItem} handleAcceptAll={() => handleAcceptAll('transactions')} handleDeclineAll={() => handleDeclineAll('transactions')} />
-                        </TabsContent>
-                         <TabsContent value="loan_requests">
-                             <GenericTable items={loanRequests} handleItemStatus={handleItemStatus} handleDeleteItem={handleDeleteItem} handleAcceptAll={() => handleAcceptAll('loans')} handleDeclineAll={() => handleDeclineAll('loans')} isLoanTable={true} />
-                        </TabsContent>
-                        <TabsContent value="new_members">
-                            <MemberRequestsTable members={pendingMembers} handleUserApproval={handleUserApproval} />
-                        </TabsContent>
-                    </Tabs>
-                </div>
+                <GenericTableCard 
+                    items={deposits} 
+                    handleItemStatus={handleItemStatus} 
+                    handleDeleteItem={handleDeleteItem} 
+                    handleAcceptAll={() => handleAcceptAll('transactions')} 
+                    handleDeclineAll={() => handleDeclineAll('transactions')} 
+                    title="Deposit Requests"
+                />
+                <GenericTableCard 
+                    items={withdrawals} 
+                    handleItemStatus={handleItemStatus} 
+                    handleDeleteItem={handleDeleteItem} 
+                    handleAcceptAll={() => handleAcceptAll('transactions')} 
+                    handleDeclineAll={() => handleDeclineAll('transactions')} 
+                    title="Withdrawal Requests"
+                />
+                <GenericTableCard 
+                    items={loanRequests} 
+                    handleItemStatus={handleItemStatus} 
+                    handleDeleteItem={handleDeleteItem} 
+                    handleAcceptAll={() => handleAcceptAll('loans')} 
+                    handleDeclineAll={() => handleDeclineAll('loans')} 
+                    isLoanTable={true}
+                    title="Loan Requests" 
+                />
+                <MemberRequestsTable members={pendingMembers} handleUserApproval={handleUserApproval} />
             </div>
         </div>
     )
 }
-
-
-    
