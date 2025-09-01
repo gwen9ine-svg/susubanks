@@ -63,6 +63,7 @@ type Member = {
   group?: string;
 };
 
+type HistoryItem = (Transaction | Loan) & { itemType: 'transaction' | 'loan' };
 
 const parseAmount = (amount: string): number => {
     return parseFloat(amount.replace(/[^0-9.-]+/g,""));
@@ -101,19 +102,18 @@ const getStatusBadge = (status: string) => {
 }
 
 type GenericTableCardProps = {
-    items: (Transaction | Loan)[];
+    items: any[];
     handleItemStatus?: (itemId: string, newStatus: 'Approved' | 'Rejected', collection: 'transactions' | 'loans') => void;
     handleAcceptAll?: (collection: 'transactions' | 'loans') => void;
     handleDeclineAll?: (collection: 'transactions' | 'loans') => void;
-    handleDeleteItem?: (itemId: string, collection: 'transactions' | 'loans') => void;
-    isLoanTable?: boolean;
+    handleDeleteItem?: (itemId: string, collection: string) => void;
+    isHistoryTable?: boolean;
     title: string;
     isRequestTable?: boolean;
 };
 
 
-const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcceptAll, handleDeclineAll, isLoanTable = false, title, isRequestTable = false }: GenericTableCardProps) => {
-    const collection = isLoanTable ? 'loans' : 'transactions';
+const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcceptAll, handleDeclineAll, isHistoryTable = false, title, isRequestTable = false }: GenericTableCardProps) => {
     
     if (items.length === 0) {
       return (
@@ -134,8 +134,8 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
             <CardTitle>{title}</CardTitle>
             {isRequestTable && handleAcceptAll && handleDeclineAll && (
               <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleAcceptAll(collection)}>Accept All</Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeclineAll(collection)}>Decline All</Button>
+                  <Button variant="outline" size="sm" onClick={() => handleAcceptAll(items[0].itemType === 'loan' ? 'loans' : 'transactions')}>Accept All</Button>
+                  <Button variant="destructive" size="sm" onClick={() => handleDeclineAll(items[0].itemType === 'loan' ? 'loans' : 'transactions')}>Decline All</Button>
               </div>
             )}
         </CardHeader>
@@ -154,13 +154,15 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {items.map((item) => (
+                    {items.map((item) => {
+                        const collection = item.itemType === 'loan' ? 'loans' : 'transactions';
+                        return (
                         <TableRow key={item.id}>
                             {isRequestTable && <TableCell><Checkbox /></TableCell>}
                             <TableCell>{item.date}</TableCell>
-                            <TableCell>{isLoanTable ? getTypeBadge('Loan') : getTypeBadge((item as Transaction).type)}</TableCell>
-                            <TableCell>{isLoanTable ? (item as Loan).memberName : (item as Transaction).member}</TableCell>
-                            <TableCell className="font-medium">{isLoanTable ? (item as Loan).reason : (item as Transaction).ref}</TableCell>
+                            <TableCell>{item.itemType === 'loan' ? getTypeBadge('Loan') : getTypeBadge((item as Transaction).type)}</TableCell>
+                            <TableCell>{item.itemType === 'loan' ? (item as Loan).memberName : (item as Transaction).member}</TableCell>
+                            <TableCell className="font-medium">{item.itemType === 'loan' ? (item as Loan).reason : (item as Transaction).ref}</TableCell>
                             <TableCell>{item.amount}</TableCell>
                             <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell>
@@ -176,7 +178,7 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent>
                                             <DropdownMenuItem>View Details</DropdownMenuItem>
-                                            {!isLoanTable && <DropdownMenuItem>Create Dispute</DropdownMenuItem>}
+                                            {!isHistoryTable && <DropdownMenuItem>Create Dispute</DropdownMenuItem>}
                                             {handleDeleteItem && (
                                                 <DropdownMenuItem onClick={() => handleDeleteItem(item.id, collection)} className="text-red-600 hover:text-red-700">
                                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -188,7 +190,7 @@ const GenericTableCard = ({ items, handleItemStatus, handleDeleteItem, handleAcc
                                 )}
                             </TableCell>
                         </TableRow>
-                    ))}
+                    )})}
                 </TableBody>
             </Table>
         </CardContent>
@@ -333,7 +335,7 @@ export default function AdminTransactionsPage() {
         }
     };
 
-    const handleDeleteItem = async (itemId: string, collection: 'transactions' | 'loans') => {
+    const handleDeleteItem = async (itemId: string, collection: string) => {
         try {
             await deleteDocument(collection, itemId);
             toast({
@@ -424,10 +426,20 @@ export default function AdminTransactionsPage() {
         }
     };
 
-    const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing'));
-    const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing'));
-    const loanRequests = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding');
-    const loanHistory = loans.filter(l => l.status === 'Paid' || l.status === 'Rejected');
+    const deposits = transactions.filter(tx => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Pending' || tx.status === 'Processing')).map(tx => ({...tx, itemType: 'transaction'}));
+    const withdrawals = transactions.filter(tx => tx.type === 'Withdrawal' && (tx.status === 'Pending' || tx.status === 'Processing')).map(tx => ({...tx, itemType: 'transaction'}));
+    const loanRequests = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding').map(l => ({...l, itemType: 'loan'}));
+    
+    const transactionHistory = transactions
+        .filter(t => ['Approved', 'Completed', 'Rejected'].includes(t.status))
+        .map(t => ({ ...t, itemType: 'transaction' as const }));
+
+    const loanHistory = loans
+        .filter(l => ['Paid', 'Rejected'].includes(l.status))
+        .map(l => ({ ...l, itemType: 'loan' as const }));
+
+    const combinedHistory: HistoryItem[] = [...transactionHistory, ...loanHistory]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
 
     return (
@@ -452,7 +464,7 @@ export default function AdminTransactionsPage() {
                 <GenericTableCard 
                     items={deposits} 
                     handleItemStatus={handleItemStatus} 
-                    handleDeleteItem={handleDeleteItem} 
+                    handleDeleteItem={(id) => handleDeleteItem(id, 'transactions')} 
                     handleAcceptAll={() => handleAcceptAll('transactions')} 
                     handleDeclineAll={() => handleDeclineAll('transactions')} 
                     title="Deposit Requests"
@@ -461,7 +473,7 @@ export default function AdminTransactionsPage() {
                 <GenericTableCard 
                     items={withdrawals} 
                     handleItemStatus={handleItemStatus} 
-                    handleDeleteItem={handleDeleteItem} 
+                    handleDeleteItem={(id) => handleDeleteItem(id, 'transactions')} 
                     handleAcceptAll={() => handleAcceptAll('transactions')} 
                     handleDeclineAll={() => handleDeclineAll('transactions')} 
                     title="Withdrawal Requests"
@@ -470,21 +482,19 @@ export default function AdminTransactionsPage() {
                 <GenericTableCard 
                     items={loanRequests} 
                     handleItemStatus={handleItemStatus} 
-                    handleDeleteItem={handleDeleteItem} 
+                    handleDeleteItem={(id) => handleDeleteItem(id, 'loans')} 
                     handleAcceptAll={() => handleAcceptAll('loans')} 
                     handleDeclineAll={() => handleDeclineAll('loans')} 
-                    isLoanTable={true}
                     title="Loan Requests"
                     isRequestTable={true}
                 />
-                <GenericTableCard
-                    items={loanHistory}
-                    isLoanTable={true}
-                    title="Loan History"
-                    handleDeleteItem={handleDeleteItem}
-                    isRequestTable={false}
-                />
                 <MemberRequestsTable members={pendingMembers} handleUserApproval={handleUserApproval} />
+                <GenericTableCard
+                    items={combinedHistory}
+                    title="History"
+                    handleDeleteItem={handleDeleteItem}
+                    isHistoryTable={true}
+                />
             </div>
         </div>
     )
