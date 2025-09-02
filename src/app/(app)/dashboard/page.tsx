@@ -86,6 +86,90 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userEmail, setUserEmail]'use client';
+
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { getCollection, seedDatabase } from "@/services/firestore"
+import { HandCoins, Landmark, Banknote, Users, TrendingUp, TrendingDown } from "lucide-react"
+
+type Transaction = {
+  id: string;
+  ref: string;
+  member: string;
+  avatar: string;
+  type: 'Contribution' | 'Withdrawal' | 'Deposit' | string;
+  amount: string;
+  date: string;
+  status: string;
+  email?: string;
+  group?: string;
+};
+
+type Loan = {
+  id: string;
+  amount: string;
+  status: 'Outstanding' | 'Paid' | 'Approved' | 'Pending' | string;
+  email?: string;
+  group?: string;
+};
+
+type Member = {
+    id: string;
+    group?: string;
+    email: string;
+    name: string;
+    avatar: string;
+    status: string;
+    contributed: string;
+};
+
+const parseAmount = (amount: string): number => {
+    if (!amount || typeof amount !== 'string') return 0;
+    return parseFloat(amount.replace(/[^0-9.-]+/g,""));
+}
+
+const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', currencyDisplay: 'symbol' }).format(value);
+}
+
+// ✅ Helper for status color
+function getStatusColor(status: string) {
+  switch (status) {
+    case "Active":
+      return "bg-green-500"
+    case "Pending":
+      return "bg-yellow-500"
+    case "Inactive":
+    case "Suspended":
+      return "bg-red-500"
+    default:
+      return "bg-gray-200"
+  }
+}
+
+const getStatusBadge = (status: string) => {
+    switch(status.toLowerCase()) {
+        case 'completed':
+        case 'approved':
+            return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
+        case 'pending': 
+        case 'processing':
+            return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+        case 'rejected': return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
+        default: return <Badge variant="outline">{status}</Badge>;
+    }
+}
+
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   // Admin state
@@ -259,6 +343,7 @@ export default function Dashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Member</TableHead>
+                    <TableHead>Group</TableHead>
                     <TableHead>Contributed</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
@@ -266,7 +351,7 @@ export default function Dashboard() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center">Loading members...</TableCell>
+                      <TableCell colSpan={4} className="text-center">Loading members...</TableCell>
                     </TableRow>
                   ) : members.length > 0 ? (
                     members.map((member: any) => (
@@ -283,6 +368,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </TableCell>
+                        <TableCell>{member.group ? member.group.replace('group', 'Group ') : 'N/A'}</TableCell>
                         <TableCell>{member.contributed}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -294,7 +380,7 @@ export default function Dashboard() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center space-y-4 py-8">
+                      <TableCell colSpan={4} className="text-center space-y-4 py-8">
                         <p>No members found in the database.</p>
                         <Button onClick={handleSeed}>Seed Database</Button>
                       </TableCell>
