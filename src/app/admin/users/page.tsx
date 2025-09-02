@@ -6,7 +6,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription
+  CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -21,17 +22,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
-import { getCollection, updateDocument } from "@/services/firestore";
+import { getCollection, updateDocument, deleteDocument } from "@/services/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 
 type Member = {
   id: string;
@@ -129,9 +135,15 @@ export default function UsersDirectoryPage() {
       ]);
 
       setUsers(memberData);
-      if(memberData.length > 0) {
+      if (selectedUser) {
+        const updatedSelectedUser = memberData.find(u => u.id === selectedUser.id);
+        setSelectedUser(updatedSelectedUser || (memberData.length > 0 ? memberData[0] : null));
+      } else if(memberData.length > 0) {
         setSelectedUser(memberData[0]);
+      } else {
+        setSelectedUser(null);
       }
+      
       setLoading(false);
     }
     
@@ -139,26 +151,21 @@ export default function UsersDirectoryPage() {
       fetchData();
     }, []);
     
-    const handleUserApproval = async (userId: string, newStatus: "Active" | "Rejected") => {
+    const handleTerminateUser = async (userId: string) => {
         try {
-            if (newStatus === 'Rejected') {
-                // Optionally delete the user doc or mark as rejected
-                 await updateDocument('members', userId, { status: newStatus });
-            } else {
-                 await updateDocument('members', userId, { status: newStatus });
-            }
-           
+            await deleteDocument('members', userId);
             toast({
-                title: `User ${newStatus === 'Active' ? 'Approved' : 'Declined'}`,
-                description: `The user has been ${newStatus === 'Active' ? 'approved' : 'declined'}.`
+                title: 'User Terminated',
+                description: 'The user account has been permanently deleted.',
+                variant: 'destructive'
             });
-            fetchData(); // Refresh data
+            fetchData();
         } catch (error) {
-            console.error("Error updating user status:", error);
+            console.error('Error terminating user:', error);
             toast({
-                title: "Update Error",
-                description: "Could not update the user status. Please try again.",
-                variant: "destructive"
+                title: 'Termination Failed',
+                description: 'Could not delete the user. Please try again.',
+                variant: 'destructive'
             });
         }
     };
@@ -174,7 +181,7 @@ export default function UsersDirectoryPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold">Registered Users</h1>
+            <h1 className="text-2xl font-bold">Users</h1>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {summaryCards.map((card, index) => (
                 <Card key={index}>
@@ -194,7 +201,7 @@ export default function UsersDirectoryPage() {
                         <Input placeholder="Search users..."/>
                     </CardHeader>
                     <CardContent className="p-0">
-                       <ul className="divide-y">
+                       <ul className="divide-y max-h-[600px] overflow-y-auto">
                          {loading ? (
                              <li className="p-4 text-center text-muted-foreground">Loading users...</li>
                          ) : (
@@ -222,10 +229,9 @@ export default function UsersDirectoryPage() {
                         </CardHeader>
                         <CardContent>
                             <Tabs defaultValue="transactions">
-                                <TabsList>
+                                <TabsList className="w-full grid grid-cols-2">
                                     <TabsTrigger value="transactions">Transactions</TabsTrigger>
                                     <TabsTrigger value="loans">Loans</TabsTrigger>
-                                    <TabsTrigger value="settings">Settings</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="transactions" className="pt-4">
                                      <Table>
@@ -278,6 +284,43 @@ export default function UsersDirectoryPage() {
                                      </Table>
                                 </TabsContent>
                             </Tabs>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-destructive">
+                        <CardHeader>
+                            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-semibold">Terminate User Account</p>
+                                    <p className="text-sm text-muted-foreground">This will permanently delete the user and all associated data.</p>
+                                </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" disabled={!selectedUser}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Terminate User
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the
+                                            account for <span className="font-bold">{selectedUser?.name}</span> and remove all their data from our servers.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => selectedUser && handleTerminateUser(selectedUser.id)}>
+                                            Continue
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
