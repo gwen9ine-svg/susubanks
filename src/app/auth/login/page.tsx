@@ -20,7 +20,7 @@ type Member = {
   role: 'Admin' | 'Member' | string;
   password?: string; // Add password field
   contributed: string;
-  status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | string;
+  status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | 'Pending' | string;
 };
 
 
@@ -56,6 +56,12 @@ export default function LoginPage() {
           title: "Login Failed",
           description: "User not found. Please check your email or register for a new account.",
           variant: "destructive",
+        });
+      } else if (user.status !== 'Active') {
+          toast({
+            title: "Login Denied",
+            description: `Your account is currently ${user.status}. Please contact an administrator for assistance.`,
+            variant: "destructive",
         });
       } else if (user.password === password) {
         toast({
@@ -99,7 +105,7 @@ export default function LoginPage() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email or Username</Label>
-          <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">

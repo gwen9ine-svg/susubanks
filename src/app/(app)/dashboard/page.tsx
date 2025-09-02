@@ -130,8 +130,8 @@ export default function Dashboard() {
       const memberData = await getCollection('members') as Member[];
       const transactionData = await getCollection('transactions');
       
-      const filteredMembers = memberData.filter(member => member.role !== 'Admin');
-      const totalMembers = filteredMembers.length;
+      const activeMembers = memberData.filter(member => member.status === 'Active' && member.role !== 'Admin');
+      const totalMembers = activeMembers.length;
       
       const approvedWithdrawals = transactionData
           .filter((tx: any) => tx.type === 'Withdrawal' && (tx.status === 'Approved' || tx.status === 'Completed'))
@@ -147,7 +147,7 @@ export default function Dashboard() {
         approvedWithdrawals: formatCurrency(approvedWithdrawals),
         totalContributions: formatCurrency(totalContributions),
       });
-      setMembers(filteredMembers);
+      setMembers(activeMembers);
 
     } else if (email) {
       const allTransactions = await getCollection('transactions') as Transaction[];
