@@ -94,6 +94,7 @@ export default function Dashboard() {
     totalUsers: "0",
     totalGroups: "6",
     approvedWithdrawals: formatCurrency(0),
+    totalContributions: formatCurrency(0),
   });
 
   // Member state
@@ -130,14 +131,20 @@ export default function Dashboard() {
       const transactionData = await getCollection('transactions');
       
       const totalMembers = memberData.length;
+      
       const approvedWithdrawals = transactionData
           .filter((tx: any) => tx.type === 'Withdrawal' && (tx.status === 'Approved' || tx.status === 'Completed'))
+          .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
+
+      const totalContributions = transactionData
+          .filter((tx: any) => (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Completed' || tx.status === 'Approved'))
           .reduce((acc: number, tx: any) => acc + parseAmount(tx.amount), 0);
 
       setAdminSummary({
         totalUsers: totalMembers.toString(),
         totalGroups: "6",
         approvedWithdrawals: formatCurrency(approvedWithdrawals),
+        totalContributions: formatCurrency(totalContributions),
       });
       setMembers(memberData);
 
@@ -204,7 +211,7 @@ export default function Dashboard() {
         <div className="space-y-6">
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Registered Users</CardTitle>
@@ -223,6 +230,15 @@ export default function Dashboard() {
                 <p className="text-xs text-muted-foreground">Number of active groups</p>
               </CardContent>
             </Card>
+             <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Total Contributions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{adminSummary.totalContributions}</div>
+                  <p className="text-xs text-muted-foreground">Across all groups</p>
+                </CardContent>
+              </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Approved Withdrawals</CardTitle>
