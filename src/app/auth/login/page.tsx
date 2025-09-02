@@ -99,7 +99,7 @@ export default function LoginPage() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email or Username</Label>
-          <Input id="email" type="email" placeholder="admin@susu.bank" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" placeholder="Enter your email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">

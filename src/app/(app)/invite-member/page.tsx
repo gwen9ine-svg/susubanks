@@ -184,7 +184,7 @@ export default function InviteMemberPage() {
                             <Input 
                                 id="email" 
                                 type="email" 
-                                placeholder="friend@example.com" 
+                                placeholder="member@example.com" 
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={isLoading}
