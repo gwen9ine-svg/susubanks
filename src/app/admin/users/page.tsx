@@ -133,13 +133,13 @@ export default function UsersDirectoryPage() {
       const transactionData = await getCollection('transactions') as Transaction[];
       const loanData = await getCollection('loans') as Loan[];
       
-      const activeUsers = memberData.filter(u => u.status !== 'Terminated' && u.role !== 'Admin');
-      const uniqueGroups = [...new Set(memberData.filter(m => m.role !== 'Admin').map(m => m.group).filter(Boolean))] as string[];
+      const activeUsers = memberData.filter(u => u.status === 'Active' && u.role !== 'Admin');
+      const uniqueGroups = [...new Set(activeUsers.map(m => m.group).filter(Boolean))] as string[];
 
       setAllGroups(uniqueGroups);
       setAllTransactions(transactionData);
       setAllLoans(loanData);
-      setAllUsers(memberData.filter(m => m.role !== 'Admin'));
+      setAllUsers(activeUsers);
 
       const monthlyDeposits = transactionData
         .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
@@ -174,7 +174,6 @@ export default function UsersDirectoryPage() {
 
     const filteredUsers = useMemo(() => {
         return allUsers
-            .filter(user => user.status !== 'Terminated')
             .filter(user => {
                 const matchesGroup = selectedGroup ? user.group === selectedGroup : true;
                 const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -309,7 +308,7 @@ export default function UsersDirectoryPage() {
                                 All Users
                             </Button>
                             {allGroups.map(group => {
-                                const memberCount = allUsers.filter(u => u.group === group && u.status !== 'Terminated').length;
+                                const memberCount = allUsers.filter(u => u.group === group).length;
                                 return (
                                 <div key={group} className="flex items-center gap-2">
                                      <Button
