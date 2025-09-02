@@ -99,7 +99,7 @@ export default function LoginPage() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email or Username</Label>
-          <Input id="email" type="email" placeholder="admin@test.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" placeholder="admin@susu.bank" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -108,7 +108,7 @@ export default function LoginPage() {
               Forgot Password?
             </Link>
           </div>
-          <Input id="password" type="password" placeholder="Admin123!" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+          <Input id="password" type="password" placeholder="password123" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
