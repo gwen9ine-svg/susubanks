@@ -32,17 +32,16 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [sourceOfFunds, setSourceOfFunds] = useState('');
-  const [group, setGroup] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateAccount = async () => {
     setIsLoading(true);
 
-    if (!fullName || !email || !password || !confirmPassword || !group || !agreed) {
+    if (!fullName || !email || !password || !confirmPassword || !agreed) {
       toast({
         title: "Validation Error",
-        description: "Please fill out all required fields, select a group, and agree to the terms.",
+        description: "Please fill out all required fields and agree to the terms.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -78,7 +77,7 @@ export default function RegisterPage() {
             password: password, // In a real app, this should be hashed.
             role: isFirstUser ? "Admin" : "Member", // First user is Admin
             status: "Pending", // Default status is now Pending
-            group: group,
+            group: null, // Group is not assigned at registration
             contributed: "GH₵0.00", // Initial contribution
             avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
         };
@@ -159,6 +158,10 @@ export default function RegisterPage() {
                 <Label htmlFor="relative-phone">Next of Kin Phone</Label>
                 <Input id="relative-phone" type="tel" placeholder="+233 12 345 6789" value={relativePhone} onChange={e => setRelativePhone(e.target.value)} />
             </div>
+             <div className="space-y-2">
+              <Label htmlFor="source-of-funds">Source of Funds</Label>
+              <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
+            </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="address">Residential Address</Label>
@@ -184,28 +187,6 @@ export default function RegisterPage() {
             <Label htmlFor="id-number">ID Number</Label>
             <Input id="id-number" placeholder="Enter ID number" value={idNumber} onChange={e => setIdNumber(e.target.value)} />
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="group">Group</Label>
-            <Select value={group} onValueChange={setGroup}>
-              <SelectTrigger id="group">
-                <SelectValue placeholder="Select a group to join" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="group1">Group 1</SelectItem>
-                <SelectItem value="group2">Group 2</SelectItem>
-                <SelectItem value="group3">Group 3</SelectItem>
-                <SelectItem value="group4">Group 4</SelectItem>
-                <SelectItem value="group5">Group 5</SelectItem>
-                <SelectItem value="group6">Group 6</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-           <div className="space-y-2">
-              <Label htmlFor="source-of-funds">Source of Funds</Label>
-              <Input id="source-of-funds" placeholder="Employment, Savings, Business, etc." value={sourceOfFunds} onChange={e => setSourceOfFunds(e.target.value)} />
-            </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -240,5 +221,3 @@ export default function RegisterPage() {
     </Card>
   );
 }
-
-    

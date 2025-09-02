@@ -85,7 +85,7 @@ export default function InviteMemberPage() {
     }, [userEmail]);
 
     const handleRegisterMember = async () => {
-        if (!fullName || !email || !group || !username || !address || !maritalStatus || !idCard || !sourceOfIncome || !govIdType) {
+        if (!fullName || !email || !username || !address || !maritalStatus || !idCard || !sourceOfIncome || !govIdType) {
             toast({
                 title: "Validation Error",
                 description: "Please fill out all fields for the new member.",
@@ -106,7 +106,7 @@ export default function InviteMemberPage() {
             govIdType,
             idCard,
             sourceOfIncome,
-            group,
+            group: group || null, // Group is optional
             password, // In a real app, this should be handled more securely
             role: "Member",
             status: "Pending", // New members start as pending
@@ -266,7 +266,7 @@ export default function InviteMemberPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="group">Group</Label>
+                            <Label htmlFor="group">Group (Optional)</Label>
                             <Select onValueChange={setGroup} value={group} disabled={isLoading}>
                                 <SelectTrigger id="group">
                                     <SelectValue placeholder="Select a group" />
@@ -335,4 +335,3 @@ export default function InviteMemberPage() {
         </div>
     );
 }
-
