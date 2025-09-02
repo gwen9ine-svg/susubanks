@@ -32,6 +32,7 @@ type Member = {
   avatar: string;
   contributed: string;
   status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | string;
+  role?: 'Admin' | 'Member' | string;
 };
 
 type Transaction = {
@@ -80,13 +81,11 @@ export default function GroupDetailsPage({ params }: { params: { groupId: string
             setLoading(true);
             const membersData = await getCollection('members') as Member[];
             const transactionsData = await getCollection('transactions') as Transaction[];
+            
+            const nonAdminMembers = membersData.filter(m => m.role !== 'Admin');
 
             const groupTransactions = transactionsData.filter(tx => tx.group === groupId && tx.type === 'Contribution' && (tx.status === 'Completed' || tx.status === 'Approved'));
             
-            // This is a placeholder for filtering members by group.
-            // In a real application, members would have a 'group' field.
-            // For now, we assume all members could be part of any group, and we'll show all members
-            // who have made a contribution to this group, plus all other members.
             const memberContributions: { [email: string]: number } = {};
             groupTransactions.forEach(tx => {
                 if (tx.email) {
@@ -94,13 +93,13 @@ export default function GroupDetailsPage({ params }: { params: { groupId: string
                 }
             });
 
-            const membersWithContributions = membersData.map(member => ({
+            const membersWithContributions = nonAdminMembers
+              .filter(member => member.group === groupId)
+              .map(member => ({
                 ...member,
                 totalContribution: formatCurrency(memberContributions[member.email] || 0)
-            }));
+              }));
 
-            // In a real app, you would filter members who are actually in the group.
-            // For this demo, we'll just show all users and their contribution to this specific group.
             setGroupMembers(membersWithContributions);
             setLoading(false);
         }

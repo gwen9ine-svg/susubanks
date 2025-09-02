@@ -1,4 +1,5 @@
 
+
 'use client';
 import {
   Card,
@@ -56,6 +57,7 @@ type Member = {
   idNumber?: string;
   sourceOfFunds?: string;
   invitedBy?: string;
+  role?: 'Admin' | 'Member' | string;
 };
 
 type Transaction = {
@@ -131,13 +133,13 @@ export default function UsersDirectoryPage() {
       const transactionData = await getCollection('transactions') as Transaction[];
       const loanData = await getCollection('loans') as Loan[];
       
-      const activeUsers = memberData.filter(u => u.status !== 'Terminated');
-      const uniqueGroups = [...new Set(memberData.map(m => m.group).filter(Boolean))] as string[];
+      const activeUsers = memberData.filter(u => u.status !== 'Terminated' && u.role !== 'Admin');
+      const uniqueGroups = [...new Set(memberData.filter(m => m.role !== 'Admin').map(m => m.group).filter(Boolean))] as string[];
 
       setAllGroups(uniqueGroups);
       setAllTransactions(transactionData);
       setAllLoans(loanData);
-      setAllUsers(memberData);
+      setAllUsers(memberData.filter(m => m.role !== 'Admin'));
 
       const monthlyDeposits = transactionData
         .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
