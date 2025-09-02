@@ -1,3 +1,4 @@
+
 const admin = require("firebase-admin");
 const serviceAccount = require("../serviceAccountKey.json");
 
@@ -20,18 +21,9 @@ async function resetUsers() {
 
     console.log("✅ All users deleted successfully");
 
-    // 👉 Create admin user
-    const userRecord = await admin.auth().createUser({
-      email: "admin@test.com",
-      password: "Admin123!",
-      displayName: "Admin",
-    });
-
-    console.log("✅ Admin user created:", userRecord.email);
   } catch (error) {
     console.error("❌ Error resetting users:", error);
   }
 }
 
 resetUsers();
-
