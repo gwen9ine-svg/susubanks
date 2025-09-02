@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter
 } from "@/components/ui/card";
 import {
   Table,
@@ -18,10 +19,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getCollection } from '@/services/firestore';
+import { addDocument, getCollection } from '@/services/firestore';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
 
 type Transaction = {
   id: string;
@@ -74,6 +86,7 @@ export default function ContributionsPage() {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [allContributions, setAllContributions] = useState<Transaction[]>([]);
   const [myContributions, setMyContributions] = useState<Transaction[]>([]);
   const [groupContributions, setGroupContributions] = useState<Record<string, number>>({});
@@ -83,55 +96,112 @@ export default function ContributionsPage() {
       myTotalContributions: 0
   });
 
-  useEffect(() => {
+  // Form State
+  const [contributionAmount, setContributionAmount] = useState('');
+  const [contributionGroup, setContributionGroup] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  async function fetchData() {
+    setLoading(true);
     const role = localStorage.getItem('userRole');
     const email = localStorage.getItem('userEmail');
+    const name = localStorage.getItem('userName');
     setUserRole(role);
     setUserEmail(email);
-  }, []);
+    setUserName(name);
+
+    const transactionData = await getCollection('transactions') as Transaction[];
+    const contributionTransactions = transactionData.filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    setAllContributions(contributionTransactions);
+
+    const totalContributions = contributionTransactions
+        .filter(c => c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved')
+        .reduce((acc, c) => acc + parseAmount(c.amount), 0);
+
+    // Group-level summary for admins
+    const groupTotals: Record<string, number> = {};
+    for (let i = 1; i <= 6; i++) {
+        const groupKey = `group${i}`;
+        groupTotals[groupKey] = contributionTransactions
+            .filter(c => c.group === groupKey && (c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved'))
+            .reduce((acc, c) => acc + parseAmount(c.amount), 0);
+    }
+    setGroupContributions(groupTotals);
+    
+    // Personal summary for all users
+    const myFilteredContributions = contributionTransactions.filter(tx => tx.email === email);
+    setMyContributions(myFilteredContributions);
+
+    const myTotalContributions = myFilteredContributions
+        .filter(c => c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved')
+        .reduce((acc, c) => acc + parseAmount(c.amount), 0);
+
+    setSummaryData({
+        totalContributions,
+        myTotalContributions
+    });
+    setLoading(false);
+  }
+
 
   useEffect(() => {
-    async function fetchData() {
-        setLoading(true);
-        const transactionData = await getCollection('transactions') as Transaction[];
-        const contributionTransactions = transactionData.filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        setAllContributions(contributionTransactions);
+    fetchData();
+  }, []);
 
-        const totalContributions = contributionTransactions
-            .filter(c => c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved')
-            .reduce((acc, c) => acc + parseAmount(c.amount), 0);
-
-        // Group-level summary for admins
-        const groupTotals: Record<string, number> = {};
-        for (let i = 1; i <= 6; i++) {
-            const groupKey = `group${i}`;
-            groupTotals[groupKey] = contributionTransactions
-                .filter(c => c.group === groupKey && (c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved'))
-                .reduce((acc, c) => acc + parseAmount(c.amount), 0);
-        }
-        setGroupContributions(groupTotals);
-        
-        // Personal summary for all users
-        const myFilteredContributions = contributionTransactions.filter(tx => tx.email === userEmail);
-        setMyContributions(myFilteredContributions);
-
-        const myTotalContributions = myFilteredContributions
-            .filter(c => c.status.toLowerCase() === 'completed' || c.status.toLowerCase() === 'approved')
-            .reduce((acc, c) => acc + parseAmount(c.amount), 0);
-
-        setSummaryData({
-            totalContributions,
-            myTotalContributions
+  const handleContributionSubmit = async () => {
+    const amount = parseFloat(contributionAmount);
+    if (!contributionAmount || !contributionGroup || !userEmail || !userName) {
+        toast({
+            title: "Missing Information",
+            description: "Please fill out all fields for your contribution.",
+            variant: "destructive",
         });
-        setLoading(false);
+        return;
     }
+    if (isNaN(amount) || amount <= 0) {
+        toast({
+            title: "Invalid Amount",
+            description: "Please enter a valid amount.",
+            variant: "destructive",
+        });
+        return;
+    }
+    setIsSubmitting(true);
+    const newContribution = {
+        ref: `CONT-${new Date().getFullYear()}-${uuidv4().split('-')[0].toUpperCase()}`,
+        member: userName,
+        email: userEmail,
+        type: 'Contribution',
+        amount: formatCurrency(parseFloat(contributionAmount)),
+        group: contributionGroup,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        status: 'Pending',
+        avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
+    };
 
-    if (userEmail) { // Only fetch once we have the user's email
+    try {
+        await addDocument('transactions', newContribution);
+        toast({
+            title: 'Contribution Submitted',
+            description: 'Your contribution has been submitted for approval.',
+        });
+        setContributionAmount('');
+        setContributionGroup('');
         fetchData();
+    } catch (error) {
+        console.error("Error submitting contribution:", error);
+        toast({
+            title: "Submission Error",
+            description: "Could not submit your contribution. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSubmitting(false);
     }
-  }, [userEmail]);
+  };
 
   if (loading) {
     return <p>Loading contributions...</p>;
@@ -213,53 +283,94 @@ export default function ContributionsPage() {
   // Default view for non-admin users
   return (
     <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-2xl font-bold">My Contributions</h1>
-             <Button variant="outline" asChild>
-                <Link href="/transactions">New Contribution</Link>
-            </Button>
+        <h1 className="text-2xl font-bold">My Contributions</h1>
+        <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Total Contributions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-3xl font-bold">{formatCurrency(summaryData.myTotalContributions)}</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Contribution History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Reference</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {myContributions.length > 0 ? myContributions.map((tx) => (
+                                    <TableRow key={tx.id}>
+                                        <TableCell className="font-medium">{tx.ref}</TableCell>
+                                        <TableCell>{getTypeBadge(tx.type)}</TableCell>
+                                        <TableCell>{tx.amount}</TableCell>
+                                        <TableCell>{tx.date}</TableCell>
+                                        <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-center">No contributions found.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+             <div className="lg:col-span-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>New Contribution</CardTitle>
+                        <CardDescription>Submit a new contribution for approval.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="contribution-amount">Amount (GHS)</Label>
+                            <Input
+                                id="contribution-amount"
+                                type="number"
+                                placeholder="Enter amount"
+                                value={contributionAmount}
+                                onChange={(e) => setContributionAmount(e.target.value)}
+                                disabled={isSubmitting}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="contribution-group">Group</Label>
+                            <Select onValueChange={setContributionGroup} value={contributionGroup} disabled={isSubmitting}>
+                                <SelectTrigger id="contribution-group">
+                                    <SelectValue placeholder="Select group" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="group1">Group 1</SelectItem>
+                                    <SelectItem value="group2">Group 2</SelectItem>
+                                    <SelectItem value="group3">Group 3</SelectItem>
+                                    <SelectItem value="group4">Group 4</SelectItem>
+                                    <SelectItem value="group5">Group 5</SelectItem>
+                                    <SelectItem value="group6">Group 6</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button onClick={handleContributionSubmit} disabled={isSubmitting}>
+                            {isSubmitting ? 'Submitting...' : 'Submit Contribution'}
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
         </div>
-        <Card>
-            <CardHeader>
-                <CardTitle>My Total Contributions</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-3xl font-bold">{formatCurrency(summaryData.myTotalContributions)}</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader>
-                <CardTitle>My Contribution History</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Reference</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Status</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {myContributions.length > 0 ? myContributions.map((tx) => (
-                            <TableRow key={tx.id}>
-                                <TableCell className="font-medium">{tx.ref}</TableCell>
-                                <TableCell>{getTypeBadge(tx.type)}</TableCell>
-                                <TableCell>{tx.amount}</TableCell>
-                                <TableCell>{tx.date}</TableCell>
-                                <TableCell>{getStatusBadge(tx.status)}</TableCell>
-                            </TableRow>
-                        )) : (
-                            <TableRow>
-                                <TableCell colSpan={5} className="text-center">No contributions found.</TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
     </div>
   );
 }
