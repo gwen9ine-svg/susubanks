@@ -22,7 +22,7 @@ type Member = {
   role: 'Admin' | 'Member' | string;
   password?: string; // Add password field
   contributed: string;
-  status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | 'Pending' | string;
+  status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | 'Pending' | 'Rejected' | string;
 };
 
 
@@ -63,13 +63,33 @@ export default function LoginPage() {
           description: "User not found. Please check your credentials or register for a new account.",
           variant: "destructive",
         });
-      } else if (user.status !== 'Active') {
+      } else if (user.password !== password) {
           toast({
-            title: "Login Denied",
-            description: `Your account is currently ${user.status}. Please contact an administrator for assistance.`,
+            title: "Login Failed",
+            description: "Invalid password. Please try again.",
             variant: "destructive",
         });
-      } else if (user.password === password) {
+      } else if (user.status !== 'Active') {
+          if (user.status === 'Pending') {
+               toast({
+                title: "Login Denied",
+                description: "Login declined. Please wait for Admin's approval",
+                variant: "destructive",
+            });
+          } else if (user.status === 'Rejected') {
+              toast({
+                title: "Login Denied",
+                description: "Your registration was rejected by Admin",
+                variant: "destructive",
+            });
+          } else {
+            toast({
+                title: "Login Denied",
+                description: `Your account is currently ${user.status}. Please contact an administrator for assistance.`,
+                variant: "destructive",
+            });
+          }
+      } else {
         toast({
           title: "Welcome Back!",
           description: `You have successfully logged in as ${user.name}.`,
@@ -80,12 +100,6 @@ export default function LoginPage() {
         localStorage.setItem('userEmail', user.email);
         localStorage.setItem('userName', user.name);
         router.push('/dashboard');
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid password. Please try again.",
-          variant: "destructive",
-        });
       }
     } catch (error) {
       console.error("Login error:", error);
