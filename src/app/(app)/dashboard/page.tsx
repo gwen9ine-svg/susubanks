@@ -261,6 +261,7 @@ export default function Dashboard() {
                   <TableRow>
                     <TableHead>Member</TableHead>
                     <TableHead>Group</TableHead>
+                    <TableHead>Role</TableHead>
                     <TableHead>Contributed</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
@@ -268,7 +269,7 @@ export default function Dashboard() {
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">Loading members...</TableCell>
+                      <TableCell colSpan={5} className="text-center">Loading members...</TableCell>
                     </TableRow>
                   ) : members.length > 0 ? (
                     members.map((member: any) => (
@@ -286,6 +287,7 @@ export default function Dashboard() {
                           </div>
                         </TableCell>
                         <TableCell>{member.group ? member.group.replace('group', 'Group ') : 'N/A'}</TableCell>
+                        <TableCell>{member.role || 'Member'}</TableCell>
                         <TableCell>{member.contributed}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -297,7 +299,7 @@ export default function Dashboard() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center space-y-4 py-8">
+                      <TableCell colSpan={5} className="text-center space-y-4 py-8">
                         <p>No members found in the database.</p>
                         <Button onClick={handleSeed}>Seed Database</Button>
                       </TableCell>
@@ -423,7 +425,3 @@ export default function Dashboard() {
     </div>
   )
 }
-
-    
-
-    
