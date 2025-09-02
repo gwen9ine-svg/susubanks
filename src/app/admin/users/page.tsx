@@ -349,7 +349,8 @@ export default function UsersDirectoryPage() {
                             <Input placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                         </CardHeader>
                         <CardContent className="p-0">
-                           <ul className="divide-y max-h-[600px] overflow-y-auto">
+                           <div className="max-h-[600px] overflow-y-auto">
+                           <ul className="divide-y">
                              {loading ? (
                                  <li className="p-4 text-center text-muted-foreground">Loading users...</li>
                              ) : filteredUsers.length > 0 ? (
@@ -372,19 +373,20 @@ export default function UsersDirectoryPage() {
                                 <li className="p-4 text-center text-muted-foreground">No users found.</li>
                              )}
                            </ul>
+                           </div>
                         </CardContent>
                     </Card>
                 </div>
                 <div className="lg:col-span-2 space-y-6">
                     {!selectedUser && !loading && (
-                         <Card className="flex items-center justify-center h-96">
+                         <Card className="flex items-center justify-center min-h-[500px]">
                             <CardContent>
                                 <p className="text-muted-foreground">Select a user to view their details.</p>
                             </CardContent>
                         </Card>
                     )}
                     {loading && (
-                        <Card className="flex items-center justify-center h-96">
+                        <Card className="flex items-center justify-center min-h-[500px]">
                            <CardContent>
                                <p className="text-muted-foreground">Loading user details...</p>
                            </CardContent>
@@ -423,6 +425,7 @@ export default function UsersDirectoryPage() {
                                         </div>
                                     </TabsContent>
                                     <TabsContent value="transactions" className="pt-4">
+                                        <div className="overflow-x-auto">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
@@ -447,8 +450,10 @@ export default function UsersDirectoryPage() {
                                                 )}
                                             </TableBody>
                                         </Table>
+                                        </div>
                                     </TabsContent>
                                     <TabsContent value="requests" className="pt-4">
+                                        <div className="overflow-x-auto">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
@@ -473,6 +478,7 @@ export default function UsersDirectoryPage() {
                                                 )}
                                             </TableBody>
                                         </Table>
+                                        </div>
                                     </TabsContent>
                                 </Tabs>
                             </CardContent>
