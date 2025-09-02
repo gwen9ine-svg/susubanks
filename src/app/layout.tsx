@@ -65,9 +65,16 @@ const navItems = [
   { href: '/transactions', icon: Receipt, label: 'Transactions' },
 ]
 
-const adminNavItems = [
+type AdminNavItem = {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  notificationKey?: 'pendingRequests';
+}
+
+const adminNavItems: AdminNavItem[] = [
   { href: '/admin/users', icon: Users2, label: 'Users' },
-  { href: '/admin/transactions', icon: ShieldCheck, label: 'User Requests' },
+  { href: '/admin/transactions', icon: ShieldCheck, label: 'User Requests', notificationKey: 'pendingRequests' },
   { href: '/admin/add-member', icon: UserPlus, label: 'Add Member' },
 ]
 
@@ -94,9 +101,14 @@ function AppLayout({
   const router = useRouter();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  
+  // Notifications for Members
   const [notifications, setNotifications] = useState({ approvedInvites: 0, approvedLoans: 0 });
   
-  async function fetchNotifications() {
+  // Notifications for Admin
+  const [adminNotifications, setAdminNotifications] = useState({ pendingRequests: 0 });
+  
+  async function fetchMemberNotifications() {
       const email = localStorage.getItem('userEmail');
       if (!email) return;
 
@@ -107,6 +119,19 @@ function AppLayout({
       const approvedLoans = allLoans.filter(loan => loan.email === email && loan.status === 'Approved').length;
 
       setNotifications({ approvedInvites, approvedLoans });
+  }
+
+  async function fetchAdminNotifications() {
+    const members = await getCollection('members');
+    const transactions = await getCollection('transactions');
+    const loans = await getCollection('loans');
+
+    const pendingMembers = members.filter(m => m.status === 'Pending').length;
+    const pendingTransactions = transactions.filter(t => t.status === 'Pending' || t.status === 'Processing').length;
+    const pendingLoans = loans.filter(l => l.status === 'Pending' || l.status === 'Outstanding').length;
+
+    const totalPending = pendingMembers + pendingTransactions + pendingLoans;
+    setAdminNotifications({ pendingRequests: totalPending });
   }
 
   useEffect(() => {
@@ -121,11 +146,15 @@ function AppLayout({
     setUserRole(role);
     setUserName(name);
 
-    if (role && role !== 'admin') {
-      fetchNotifications();
+    if (role) {
+      if (role === 'admin') {
+        fetchAdminNotifications();
+      } else {
+        fetchMemberNotifications();
+      }
     }
 
-  }, [pathname, router]);
+  }, [pathname, router, userRole]);
 
   const handleLogout = () => {
     localStorage.removeItem('userRole');
@@ -195,7 +224,9 @@ function AppLayout({
                   <SidebarMenuItem>
                     <Badge variant="outline" className="w-full justify-start group-data-[collapsible=icon]:hidden mt-4 mb-2 -ml-1">Admin</Badge>
                   </SidebarMenuItem>
-                  {adminNavItems.map((item) => (
+                  {adminNavItems.map((item) => {
+                    const notificationCount = item.notificationKey ? adminNotifications[item.notificationKey] : 0;
+                    return (
                     <SidebarMenuItem key={item.href}>
                       <Link href={item.href} passHref>
                         <SidebarMenuButton
@@ -204,13 +235,14 @@ function AppLayout({
                           tooltip={{ children: item.label }}
                         >
                             <span>
-                            <item.icon />
-                            <span>{item.label}</span>
-                          </span>
+                              <item.icon />
+                              <span>{item.label}</span>
+                              {notificationCount > 0 && <SidebarMenuBadge>{notificationCount}</SidebarMenuBadge>}
+                            </span>
                         </SidebarMenuButton>
                       </Link>
                     </SidebarMenuItem>
-                  ))}
+                  )})}
                 </>
               ) : (
                 <>
