@@ -173,3 +173,5 @@ export default function GroupDetailsPage({ params }: { params: { groupId: string
         </div>
     );
 }
+
+    
