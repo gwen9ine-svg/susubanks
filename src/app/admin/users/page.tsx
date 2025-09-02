@@ -55,6 +55,7 @@ type Member = {
   govIdType?: string;
   idNumber?: string;
   sourceOfFunds?: string;
+  invitedBy?: string;
 };
 
 type Transaction = {
@@ -107,7 +108,7 @@ const DetailItem = ({ label, value }: { label: string, value?: string }) => (
 
 
 export default function UsersDirectoryPage() {
-    const [users, setUsers] = useState<Member[]>([]);
+    const [allUsers, setAllUsers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
     const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
     const [allLoans, setAllLoans] = useState<Loan[]>([]);
@@ -119,8 +120,6 @@ export default function UsersDirectoryPage() {
         { title: "Total Loans Given", value: formatCurrency(0) },
     ]);
     const { toast } = useToast();
-    const [pendingUsers, setPendingUsers] = useState<Member[]>([]);
-
 
     async function fetchData() {
       setLoading(true);
@@ -131,9 +130,6 @@ export default function UsersDirectoryPage() {
       setAllTransactions(transactionData);
       setAllLoans(loanData);
       
-      const pendingApprovalUsers = memberData.filter(m => m.status === 'Pending');
-      setPendingUsers(pendingApprovalUsers);
-
       const totalMembers = memberData.length;
       const monthlyDeposits = transactionData
         .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
@@ -150,7 +146,7 @@ export default function UsersDirectoryPage() {
         { title: "Total Loans Given", value: formatCurrency(totalLoansGiven) },
       ]);
 
-      setUsers(memberData);
+      setAllUsers(memberData);
       if (selectedUser) {
         const updatedSelectedUser = memberData.find(u => u.id === selectedUser.id);
         setSelectedUser(updatedSelectedUser || (memberData.length > 0 ? memberData[0] : null));
@@ -192,6 +188,10 @@ export default function UsersDirectoryPage() {
         
     const userLoans = selectedUser
         ? allLoans.filter(loan => loan.email === selectedUser.email)
+        : [];
+        
+    const pendingMemberRequests = selectedUser
+        ? allUsers.filter(u => u.invitedBy === selectedUser.email && u.status === 'Pending')
         : [];
 
     const userFinancials = useMemo(() => {
@@ -245,7 +245,7 @@ export default function UsersDirectoryPage() {
                          {loading ? (
                              <li className="p-4 text-center text-muted-foreground">Loading users...</li>
                          ) : (
-                            users.map(user => (
+                            allUsers.map(user => (
                                 <li key={user.id} onClick={() => setSelectedUser(user)} className={`p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer ${selectedUser?.id === user.id ? 'bg-muted/50' : ''}`}>
                                     <div className="flex items-center gap-3">
                                         <Avatar>
@@ -268,11 +268,11 @@ export default function UsersDirectoryPage() {
                             <CardDescription>View and manage user information.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Tabs defaultValue="profile">
+                             <Tabs defaultValue="profile">
                                 <TabsList className="w-full grid grid-cols-3">
                                     <TabsTrigger value="profile">Profile</TabsTrigger>
                                     <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                                    <TabsTrigger value="loans">Loans</TabsTrigger>
+                                    <TabsTrigger value="requests">Member Requests</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="profile" className="pt-4">
                                      <div className="space-y-4">
@@ -318,29 +318,31 @@ export default function UsersDirectoryPage() {
                                         </TableBody>
                                      </Table>
                                 </TabsContent>
-                                 <TabsContent value="loans" className="pt-4">
-                                     <Table>
+                                <TabsContent value="requests" className="pt-4">
+                                    <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Amount</TableHead>
-                                                <TableHead>Date</TableHead>
+                                                <TableHead>Name</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Group</TableHead>
                                                 <TableHead>Status</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {userLoans.length > 0 ? userLoans.map(loan => (
-                                                <TableRow key={loan.id}>
-                                                    <TableCell>{loan.amount}</TableCell>
-                                                    <TableCell>{loan.date}</TableCell>
-                                                    <TableCell><Badge className={getStatusBadge(loan.status)}>{loan.status}</Badge></TableCell>
+                                            {pendingMemberRequests.length > 0 ? pendingMemberRequests.map(req => (
+                                                <TableRow key={req.id}>
+                                                    <TableCell>{req.name}</TableCell>
+                                                    <TableCell>{req.email}</TableCell>
+                                                    <TableCell>{req.group ? req.group.replace('group', 'Group ') : 'N/A'}</TableCell>
+                                                    <TableCell><Badge className={getStatusBadge(req.status)}>{req.status}</Badge></TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={3} className="text-center">No loans for this user.</TableCell>
+                                                    <TableCell colSpan={4} className="text-center">No pending member requests from this user.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
-                                     </Table>
+                                    </Table>
                                 </TabsContent>
                             </Tabs>
                         </CardContent>
