@@ -16,6 +16,7 @@ type Member = {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   avatar: string;
   role: 'Admin' | 'Member' | string;
   password?: string; // Add password field
@@ -25,7 +26,7 @@ type Member = {
 
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -34,10 +35,10 @@ export default function LoginPage() {
   const handleLogin = async () => {
     setIsLoading(true);
 
-    if (!email || !password) {
+    if (!identifier || !password) {
       toast({
         title: "Login Failed",
-        description: "Please enter both email and password.",
+        description: "Please enter both email/phone and password.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -49,12 +50,15 @@ export default function LoginPage() {
       await seedDatabase();
       
       const members = await getCollection('members') as Member[];
-      const user = members.find(member => member.email.toLowerCase() === email.toLowerCase());
+      const user = members.find(member => 
+        member.email.toLowerCase() === identifier.toLowerCase() || 
+        (member.phone && member.phone === identifier)
+      );
 
       if (!user) {
         toast({
           title: "Login Failed",
-          description: "User not found. Please check your email or register for a new account.",
+          description: "User not found. Please check your credentials or register for a new account.",
           variant: "destructive",
         });
       } else if (user.status !== 'Active') {
@@ -104,8 +108,8 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email or Username</Label>
-          <Input id="email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Label htmlFor="identifier">Email or Phone Number</Label>
+          <Input id="identifier" type="text" placeholder="you@example.com or +233..." required value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
