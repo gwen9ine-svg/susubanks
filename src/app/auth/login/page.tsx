@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { SusuLogo } from "@/components/icons";
 import { useToast } from "@/hooks/use-toast";
 import { getCollection, seedDatabase } from "@/services/firestore";
+import { Eye, EyeOff } from "lucide-react";
 
 type Member = {
   id: string;
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -118,7 +120,18 @@ export default function LoginPage() {
               Forgot Password?
             </Link>
           </div>
-          <Input id="password" type="password" placeholder="password123" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="relative">
+            <Input id="password" type={showPassword ? "text" : "password"} placeholder="password123" required value={password} onChange={(e) => setPassword(e.target.value)} />
+             <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 text-muted-foreground"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
