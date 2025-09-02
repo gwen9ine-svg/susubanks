@@ -108,7 +108,7 @@ export default function LoginPage() {
               Forgot Password?
             </Link>
           </div>
-          <Input id="password" type="password" placeholder="Admin123!" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input id="password" type="password" placeholder="Admin123!" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
