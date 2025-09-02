@@ -111,7 +111,7 @@ export default function LoginPage() {
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="identifier">Email or Phone Number</Label>
-          <Input id="identifier" type="text" placeholder="you@example.com or +233..." required value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
+          <Input id="identifier" type="text" placeholder="enter your email/phone" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -121,7 +121,7 @@ export default function LoginPage() {
             </Link>
           </div>
           <div className="relative">
-            <Input id="password" type={showPassword ? "text" : "password"} placeholder="password123" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input id="password" type={showPassword ? "text" : "password"} placeholder="enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} />
              <Button
               type="button"
               variant="ghost"
