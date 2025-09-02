@@ -23,6 +23,7 @@ type Member = {
   password?: string; // Add password field
   contributed: string;
   status: 'Active' | 'On Leave' | 'Suspended' | 'Contributor' | 'Member' | 'Loan' | 'Pending' | 'Rejected' | string;
+  loginCount?: number;
 };
 
 
@@ -90,15 +91,24 @@ export default function LoginPage() {
             });
           }
       } else {
-        toast({
-          title: "Welcome Back!",
-          description: `You have successfully logged in as ${user.name}.`,
-        });
         // In a real app, you'd use a secure way to manage sessions (e.g., JWT).
         // For this demo, localStorage is used for simplicity.
         localStorage.setItem('userRole', user.role.toLowerCase());
         localStorage.setItem('userEmail', user.email);
         localStorage.setItem('userName', user.name);
+
+        // Check for first login
+        if (!user.loginCount || user.loginCount === 0) {
+            localStorage.setItem('firstLogin', 'true');
+        } else {
+            localStorage.removeItem('firstLogin');
+        }
+
+        toast({
+          title: user.loginCount === 0 ? "Welcome!" : "Welcome Back!",
+          description: `You have successfully logged in as ${user.name}.`,
+        });
+        
         router.push('/dashboard');
       }
     } catch (error) {

@@ -64,12 +64,15 @@ const getStatusBadge = (status: string) => {
         case 'pending':
         case 'processing':
             return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+        case 'rejected':
+             return <Badge variant="destructive">Rejected</Badge>;
         default:
             return <Badge variant="outline">{status}</Badge>;
     }
 }
 
 const parseAmount = (amount: string): number => {
+    if (!amount) return 0;
     return parseFloat(amount.replace(/[^0-9.-]+/g,""));
 }
 
@@ -81,6 +84,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [summaryData, setSummaryData] = useState<SummaryData>({
     totalVolume: 0,
     totalContributions: 0,
@@ -92,28 +96,32 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     const email = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole');
     setUserEmail(email);
+    setUserRole(role);
   }, []);
 
   useEffect(() => {
     async function fetchTransactions() {
+      if (userRole === null) return;
+
       setLoading(true);
       const transactionData = await getCollection('transactions') as Transaction[];
       
-      let userTransactions = transactionData;
-      const email = localStorage.getItem('userEmail');
-      if(email) {
-        userTransactions = transactionData.filter(tx => tx.email === email);
+      let relevantTransactions = transactionData;
+      // If the user is not an admin, filter to show only their transactions
+      if(userRole !== 'admin' && userEmail) {
+        relevantTransactions = transactionData.filter(tx => tx.email === userEmail);
       }
       
-      const sortedTransactions = userTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const sortedTransactions = relevantTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setTransactions(sortedTransactions);
       setLoading(false);
     }
     
     fetchTransactions();
 
-  }, []);
+  }, [userRole, userEmail]);
 
   useEffect(() => {
     if (transactions.length > 0) {
@@ -121,8 +129,8 @@ export default function TransactionsPage() {
         const amount = parseAmount(tx.amount);
         const status = tx.status.toLowerCase();
 
-        if (tx.type === 'Contribution') {
-          if (status === 'completed' || status === 'approved' || status === 'processing' || status === 'pending') {
+        if (tx.type === 'Contribution' || tx.type === 'Deposit') {
+          if (status === 'completed' || status === 'approved') {
             acc.totalContributions += amount;
             acc.contributionEntries++;
           }
@@ -165,10 +173,12 @@ export default function TransactionsPage() {
     { title: "Fees & Adjustments", value: formatCurrency(0), count: "0 entries" },
   ];
 
+  const pageTitle = userRole === 'admin' ? "All Transactions" : "My Transactions";
+
   return (
     <div className="space-y-6">
        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">My Transactions</h1>
+        <h1 className="text-2xl font-bold">{pageTitle}</h1>
       </div>
       
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -189,14 +199,14 @@ export default function TransactionsPage() {
         <div className="space-y-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>All My Transactions</CardTitle>
+                    <CardTitle>{userRole === 'admin' ? 'Transaction History' : 'My Transaction History'}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Reference</TableHead>
-                                <TableHead>Member</TableHead>
+                                {userRole === 'admin' && <TableHead>Member</TableHead>}
                                 <TableHead>Type</TableHead>
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Date</TableHead>
@@ -206,20 +216,22 @@ export default function TransactionsPage() {
                         <TableBody>
                           {loading ? (
                             <TableRow>
-                              <TableCell colSpan={6} className="text-center">Loading transactions...</TableCell>
+                              <TableCell colSpan={userRole === 'admin' ? 6 : 5} className="text-center">Loading transactions...</TableCell>
                             </TableRow>
                           ) : transactions.length > 0 ? transactions.map((tx: any) => (
                                 <TableRow key={tx.id} className="cursor-pointer hover:bg-muted/50">
                                     <TableCell className="font-medium">{tx.ref}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={tx.avatar} data-ai-hint="person avatar" />
-                                                <AvatarFallback>{tx.member.substring(0,1)}</AvatarFallback>
-                                            </Avatar>
-                                            <span>{tx.member}</span>
-                                        </div>
-                                    </TableCell>
+                                    {userRole === 'admin' && 
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-6 w-6">
+                                                    <AvatarImage src={tx.avatar} data-ai-hint="person avatar" />
+                                                    <AvatarFallback>{tx.member.substring(0,1)}</AvatarFallback>
+                                                </Avatar>
+                                                <span>{tx.member}</span>
+                                            </div>
+                                        </TableCell>
+                                    }
                                     <TableCell>{getTypeBadge(tx.type)}</TableCell>
                                     <TableCell>{tx.amount}</TableCell>
                                     <TableCell>{tx.date}</TableCell>
@@ -227,7 +239,7 @@ export default function TransactionsPage() {
                                 </TableRow>
                             )) : (
                               <TableRow>
-                                <TableCell colSpan={6} className="text-center">No transactions found.</TableCell>
+                                <TableCell colSpan={userRole === 'admin' ? 6 : 5} className="text-center">No transactions found.</TableCell>
                               </TableRow>
                             )}
                         </TableBody>
