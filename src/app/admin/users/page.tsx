@@ -1,5 +1,4 @@
 
-
 'use client';
 import {
   Card,
@@ -7,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -35,9 +35,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState, useMemo } from "react";
 import { getCollection, deleteDocument } from "@/services/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { writeBatch } from "firebase/firestore";
+import { doc, writeBatch } from "firebase/firestore";
 
 type Member = {
   id: string;
@@ -89,14 +89,14 @@ const formatCurrency = (value: number): string => {
 
 const getStatusBadge = (status: string) => {
     switch (status) {
-        case "Contributor": return "bg-blue-100 text-blue-800";
+        case "Contributor": return <Badge className="bg-blue-100 text-blue-800">{status}</Badge>;
         case "Active":
-        case "Member": return "bg-green-100 text-green-800";
-        case "Loan": return "bg-yellow-100 text-yellow-800";
-        case "Suspended": return "bg-red-100 text-red-800";
-        case "Pending": return "bg-orange-100 text-orange-800";
-        case "Terminated": return "bg-gray-500 text-white";
-        default: return "bg-gray-100 text-gray-800";
+        case "Member": return <Badge className="bg-green-100 text-green-800">{status}</Badge>;
+        case "Loan": return <Badge className="bg-yellow-100 text-yellow-800">{status}</Badge>;
+        case "Suspended": return <Badge className="bg-red-100 text-red-800">{status}</Badge>;
+        case "Pending": return <Badge className="bg-orange-100 text-orange-800">{status}</Badge>;
+        case "Terminated": return <Badge className="bg-gray-500 text-white">{status}</Badge>;
+        default: return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
 }
 
@@ -116,23 +116,29 @@ export default function UsersDirectoryPage() {
     const [selectedUser, setSelectedUser] = useState<Member | null>(null);
     const [summaryCards, setSummaryCards] = useState([
         { title: "Total Members", value: "0" },
-        { title: "Active Groups", value: "6" },
+        { title: "Active Groups", value: "0" },
         { title: "Monthly Deposits", value: formatCurrency(0) },
         { title: "Total Loans Given", value: formatCurrency(0) },
     ]);
     const { toast } = useToast();
+    const [allGroups, setAllGroups] = useState<string[]>([]);
+    const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     async function fetchData() {
       setLoading(true);
       const memberData = await getCollection('members') as Member[];
       const transactionData = await getCollection('transactions') as Transaction[];
       const loanData = await getCollection('loans') as Loan[];
+      
+      const activeUsers = memberData.filter(u => u.status !== 'Terminated');
+      const uniqueGroups = [...new Set(memberData.map(m => m.group).filter(Boolean))] as string[];
 
+      setAllGroups(uniqueGroups);
       setAllTransactions(transactionData);
       setAllLoans(loanData);
       setAllUsers(memberData);
 
-      const totalMembers = memberData.length;
       const monthlyDeposits = transactionData
         .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
         .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
@@ -142,17 +148,17 @@ export default function UsersDirectoryPage() {
         .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
 
       setSummaryCards([
-        { title: "Total Members", value: totalMembers.toString() },
-        { title: "Active Groups", value: "6" },
+        { title: "Total Members", value: activeUsers.length.toString() },
+        { title: "Active Groups", value: uniqueGroups.length.toString() },
         { title: "Monthly Deposits", value: formatCurrency(monthlyDeposits) },
         { title: "Total Loans Given", value: formatCurrency(totalLoansGiven) },
       ]);
-
+      
       if (selectedUser) {
         const updatedSelectedUser = memberData.find(u => u.id === selectedUser.id);
-        setSelectedUser(updatedSelectedUser || (memberData.length > 0 ? memberData[0] : null));
-      } else if(memberData.length > 0) {
-        setSelectedUser(memberData[0]);
+        setSelectedUser(updatedSelectedUser || null);
+      } else if(activeUsers.length > 0) {
+        setSelectedUser(activeUsers[0]);
       } else {
         setSelectedUser(null);
       }
@@ -163,6 +169,24 @@ export default function UsersDirectoryPage() {
     useEffect(() => {
       fetchData();
     }, []);
+
+    const filteredUsers = useMemo(() => {
+        return allUsers
+            .filter(user => user.status !== 'Terminated')
+            .filter(user => {
+                const matchesGroup = selectedGroup ? user.group === selectedGroup : true;
+                const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase());
+                return matchesGroup && matchesSearch;
+            });
+    }, [allUsers, selectedGroup, searchTerm]);
+
+    useEffect(() => {
+        if (filteredUsers.length > 0) {
+            setSelectedUser(u => filteredUsers.find(fu => fu.id === u?.id) || filteredUsers[0]);
+        } else {
+            setSelectedUser(null);
+        }
+    }, [filteredUsers]);
     
     const handleTerminateUser = async (userId: string) => {
         try {
@@ -221,10 +245,6 @@ export default function UsersDirectoryPage() {
         ? allTransactions.filter(tx => tx.email === selectedUser.email)
         : [];
         
-    const userLoans = selectedUser
-        ? allLoans.filter(loan => loan.email === selectedUser.email)
-        : [];
-        
     const pendingMemberRequests = selectedUser
         ? allUsers.filter(u => u.invitedBy === selectedUser.email && u.status === 'Pending')
         : [];
@@ -258,7 +278,7 @@ export default function UsersDirectoryPage() {
         <div className="space-y-6">
             <h1 className="text-2xl font-bold">Users</h1>
             
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {summaryCards.map((card, index) => (
                 <Card key={index}>
                     <CardHeader>
@@ -271,204 +291,249 @@ export default function UsersDirectoryPage() {
                 ))}
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-3 mt-6">
-                <Card className="lg:col-span-1">
-                    <CardHeader>
-                        <Input placeholder="Search users..."/>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                       <ul className="divide-y max-h-[600px] overflow-y-auto">
-                         {loading ? (
-                             <li className="p-4 text-center text-muted-foreground">Loading users...</li>
-                         ) : allUsers.length > 0 ? (
-                            allUsers.map(user => (
-                                <li key={user.id} onClick={() => setSelectedUser(user)} className={`p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer ${selectedUser?.id === user.id ? 'bg-muted/50' : ''}`}>
-                                    <div className="flex items-center gap-3">
-                                        <Avatar>
-                                            <AvatarImage src={user.avatar} data-ai-hint="person avatar"/>
-                                            <AvatarFallback>{user.name.substring(0,2)}</AvatarFallback>
-                                        </Avatar>
-                                        <span>{user.name}</span>
-                                    </div>
-                                    <Badge className={getStatusBadge(user.status)}>{user.status}</Badge>
-                                </li>
-                             ))
-                         ) : (
-                            <li className="p-4 text-center text-muted-foreground">No users found.</li>
-                         )}
-                       </ul>
-                    </CardContent>
-                </Card>
-                <div className="lg:col-span-2 space-y-6">
+            <div className="grid gap-6 lg:grid-cols-3">
+                 <div className="lg:col-span-1 flex flex-col gap-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>User Details for {selectedUser?.name || '...'}</CardTitle>
-                            <CardDescription>View and manage user information.</CardDescription>
+                            <CardTitle>Groups</CardTitle>
+                            <CardDescription>Select a group to view its members.</CardDescription>
                         </CardHeader>
-                        <CardContent>
-                             <Tabs defaultValue="profile">
-                                <TabsList className="w-full grid grid-cols-3">
-                                    <TabsTrigger value="profile">Profile</TabsTrigger>
-                                    <TabsTrigger value="transactions">Transactions</TabsTrigger>
-                                    <TabsTrigger value="requests">Member Requests</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="profile" className="pt-4">
-                                     <div className="space-y-4">
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                            <DetailItem label="Full Name" value={selectedUser?.name} />
-                                            <DetailItem label="Email Address" value={selectedUser?.email} />
-                                            <DetailItem label="Phone Number" value={selectedUser?.phone} />
-                                            <DetailItem label="Group" value={selectedUser?.group ? selectedUser.group.replace('group', 'Group ') : 'N/A'} />
-                                            <DetailItem label="Status" value={selectedUser?.status} />
-                                            <DetailItem label="Date of Birth" value={selectedUser?.dob} />
-                                            <DetailItem label="Nationality" value={selectedUser?.nationality} />
-                                            <DetailItem label="Residential Address" value={selectedUser?.address} />
-                                            <DetailItem label="Marital Status" value={selectedUser?.maritalStatus} />
-                                            <DetailItem label="ID Type" value={selectedUser?.govIdType} />
-                                            <DetailItem label="ID Number" value={selectedUser?.idNumber} />
-                                            <DetailItem label="Source of Funds" value={selectedUser?.sourceOfFunds} />
+                        <CardContent className="space-y-2">
+                           <Button
+                                variant={!selectedGroup ? 'secondary' : 'outline'}
+                                className="w-full justify-start"
+                                onClick={() => setSelectedGroup(null)}
+                            >
+                                All Users
+                            </Button>
+                            {allGroups.map(group => {
+                                const memberCount = allUsers.filter(u => u.group === group && u.status !== 'Terminated').length;
+                                return (
+                                <div key={group} className="flex items-center gap-2">
+                                     <Button
+                                        variant={selectedGroup === group ? 'secondary' : 'outline'}
+                                        className="w-full justify-start"
+                                        onClick={() => setSelectedGroup(group)}
+                                    >
+                                        <Users className="mr-2 h-4 w-4" />
+                                        <span className="flex-1">{group.replace('group', 'Group ')} ({memberCount})</span>
+                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="shrink-0 text-destructive/70 hover:text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action is irreversible. This will permanently delete <span className="font-bold">{group.replace('group', 'Group ')}</span> and all of its members.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleTerminateGroup(group)}>
+                                                Continue
+                                            </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            )})}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <Input placeholder="Search users..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                        </CardHeader>
+                        <CardContent className="p-0">
+                           <ul className="divide-y max-h-[600px] overflow-y-auto">
+                             {loading ? (
+                                 <li className="p-4 text-center text-muted-foreground">Loading users...</li>
+                             ) : filteredUsers.length > 0 ? (
+                                filteredUsers.map(user => (
+                                    <li key={user.id} onClick={() => setSelectedUser(user)} className={`p-4 flex items-center justify-between hover:bg-muted/50 cursor-pointer ${selectedUser?.id === user.id ? 'bg-muted/50' : ''}`}>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={user.avatar} data-ai-hint="person avatar"/>
+                                                <AvatarFallback>{user.name.substring(0,2)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-medium">{user.name}</p>
+                                                <p className="text-sm text-muted-foreground">{user.email}</p>
+                                            </div>
                                         </div>
-                                     </div>
-                                </TabsContent>
-                                <TabsContent value="transactions" className="pt-4">
-                                     <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Type</TableHead>
-                                                <TableHead>Amount</TableHead>
-                                                <TableHead>Date</TableHead>
-                                                <TableHead>Status</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {userTransactions.length > 0 ? userTransactions.map(tx => (
-                                                <TableRow key={tx.id}>
-                                                    <TableCell>{tx.type}</TableCell>
-                                                    <TableCell>{tx.amount}</TableCell>
-                                                    <TableCell>{tx.date}</TableCell>
-                                                    <TableCell><Badge className={getStatusBadge(tx.status)}>{tx.status}</Badge></TableCell>
-                                                </TableRow>
-                                            )) : (
+                                        {getStatusBadge(user.status)}
+                                    </li>
+                                 ))
+                             ) : (
+                                <li className="p-4 text-center text-muted-foreground">No users found.</li>
+                             )}
+                           </ul>
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="lg:col-span-2 space-y-6">
+                    {!selectedUser && !loading && (
+                         <Card className="flex items-center justify-center h-96">
+                            <CardContent>
+                                <p className="text-muted-foreground">Select a user to view their details.</p>
+                            </CardContent>
+                        </Card>
+                    )}
+                    {loading && (
+                        <Card className="flex items-center justify-center h-96">
+                           <CardContent>
+                               <p className="text-muted-foreground">Loading user details...</p>
+                           </CardContent>
+                       </Card>
+                    )}
+                    {selectedUser && (
+                        <>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>User Details for {selectedUser?.name || '...'}</CardTitle>
+                                <CardDescription>View and manage user information.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Tabs defaultValue="profile">
+                                    <TabsList className="w-full grid grid-cols-3">
+                                        <TabsTrigger value="profile">Profile</TabsTrigger>
+                                        <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                                        <TabsTrigger value="requests">Member Requests</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="profile" className="pt-4">
+                                        <div className="space-y-4">
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                <DetailItem label="Full Name" value={selectedUser?.name} />
+                                                <DetailItem label="Email Address" value={selectedUser?.email} />
+                                                <DetailItem label="Phone Number" value={selectedUser?.phone} />
+                                                <DetailItem label="Group" value={selectedUser?.group ? selectedUser.group.replace('group', 'Group ') : 'N/A'} />
+                                                <DetailItem label="Status" value={selectedUser?.status} />
+                                                <DetailItem label="Date of Birth" value={selectedUser?.dob} />
+                                                <DetailItem label="Nationality" value={selectedUser?.nationality} />
+                                                <DetailItem label="Residential Address" value={selectedUser?.address} />
+                                                <DetailItem label="Marital Status" value={selectedUser?.maritalStatus} />
+                                                <DetailItem label="ID Type" value={selectedUser?.govIdType} />
+                                                <DetailItem label="ID Number" value={selectedUser?.idNumber} />
+                                                <DetailItem label="Source of Funds" value={selectedUser?.sourceOfFunds} />
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+                                    <TabsContent value="transactions" className="pt-4">
+                                        <Table>
+                                            <TableHeader>
                                                 <TableRow>
-                                                    <TableCell colSpan={4} className="text-center">No transactions for this user.</TableCell>
+                                                    <TableHead>Type</TableHead>
+                                                    <TableHead>Amount</TableHead>
+                                                    <TableHead>Date</TableHead>
+                                                    <TableHead>Status</TableHead>
                                                 </TableRow>
-                                            )}
-                                        </TableBody>
-                                     </Table>
-                                </TabsContent>
-                                <TabsContent value="requests" className="pt-4">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Email</TableHead>
-                                                <TableHead>Group</TableHead>
-                                                <TableHead>Status</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {pendingMemberRequests.length > 0 ? pendingMemberRequests.map(req => (
-                                                <TableRow key={req.id}>
-                                                    <TableCell>{req.name}</TableCell>
-                                                    <TableCell>{req.email}</TableCell>
-                                                    <TableCell>{req.group ? req.group.replace('group', 'Group ') : 'N/A'}</TableCell>
-                                                    <TableCell><Badge className={getStatusBadge(req.status)}>{req.status}</Badge></TableCell>
-                                                </TableRow>
-                                            )) : (
+                                            </TableHeader>
+                                            <TableBody>
+                                                {userTransactions.length > 0 ? userTransactions.map(tx => (
+                                                    <TableRow key={tx.id}>
+                                                        <TableCell>{tx.type}</TableCell>
+                                                        <TableCell>{tx.amount}</TableCell>
+                                                        <TableCell>{tx.date}</TableCell>
+                                                        <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                                                    </TableRow>
+                                                )) : (
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="text-center">No transactions for this user.</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </TabsContent>
+                                    <TabsContent value="requests" className="pt-4">
+                                        <Table>
+                                            <TableHeader>
                                                 <TableRow>
-                                                    <TableCell colSpan={4} className="text-center">No pending member requests from this user.</TableCell>
+                                                    <TableHead>Name</TableHead>
+                                                    <TableHead>Email</TableHead>
+                                                    <TableHead>Group</TableHead>
+                                                    <TableHead>Status</TableHead>
                                                 </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TabsContent>
-                            </Tabs>
-                        </CardContent>
-                    </Card>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {pendingMemberRequests.length > 0 ? pendingMemberRequests.map(req => (
+                                                    <TableRow key={req.id}>
+                                                        <TableCell>{req.name}</TableCell>
+                                                        <TableCell>{req.email}</TableCell>
+                                                        <TableCell>{req.group ? req.group.replace('group', 'Group ') : 'N/A'}</TableCell>
+                                                        <TableCell>{getStatusBadge(req.status)}</TableCell>
+                                                    </TableRow>
+                                                )) : (
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="text-center">No pending member requests from this user.</TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Financial Summary</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="p-4 bg-muted rounded-lg">
-                                <h4 className="text-sm text-muted-foreground">Total Contributions</h4>
-                                <p className="text-xl font-bold">{formatCurrency(userFinancials.totalContributions)}</p>
-                            </div>
-                             <div className="p-4 bg-muted rounded-lg">
-                                <h4 className="text-sm text-muted-foreground">Total Withdrawals</h4>
-                                <p className="text-xl font-bold">{formatCurrency(userFinancials.totalWithdrawals)}</p>
-                            </div>
-                             <div className="p-4 bg-muted rounded-lg">
-                                <h4 className="text-sm text-muted-foreground">Total Loans</h4>
-                                <p className="text-xl font-bold">{formatCurrency(userFinancials.totalLoans)}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Financial Summary</CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-4 bg-muted rounded-lg">
+                                    <h4 className="text-sm text-muted-foreground">Total Contributions</h4>
+                                    <p className="text-xl font-bold">{formatCurrency(userFinancials.totalContributions)}</p>
+                                </div>
+                                <div className="p-4 bg-muted rounded-lg">
+                                    <h4 className="text-sm text-muted-foreground">Total Withdrawals</h4>
+                                    <p className="text-xl font-bold">{formatCurrency(userFinancials.totalWithdrawals)}</p>
+                                </div>
+                                <div className="p-4 bg-muted rounded-lg">
+                                    <h4 className="text-sm text-muted-foreground">Total Loans</h4>
+                                    <p className="text-xl font-bold">{formatCurrency(userFinancials.totalLoans)}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    <Card className="border-destructive">
-                        <CardHeader>
-                            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="font-semibold">Terminate User Account</p>
-                                    <p className="text-sm text-muted-foreground">This will permanently delete the user's account.</p>
+                        <Card className="border-destructive">
+                            <CardHeader>
+                                <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="font-semibold">Terminate User Account</p>
+                                        <p className="text-sm text-muted-foreground">This will permanently delete the user's account.</p>
+                                    </div>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" disabled={!selectedUser}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Terminate User
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the account for <span className="font-bold">{selectedUser?.name}</span> and all associated data.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => selectedUser && handleTerminateUser(selectedUser.id)}>
+                                                Continue
+                                            </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" disabled={!selectedUser}>
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Terminate User
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action cannot be undone. This will permanently delete the account for <span className="font-bold">{selectedUser?.name}</span> and all associated data.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => selectedUser && handleTerminateUser(selectedUser.id)}>
-                                            Continue
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                             <div className="flex items-center justify-between pt-4 border-t border-destructive/20">
-                                <div>
-                                    <p className="font-semibold">Terminate Group</p>
-                                    <p className="text-sm text-muted-foreground">This will permanently delete the user's entire group.</p>
-                                </div>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" disabled={!selectedUser || !selectedUser.group}>
-                                            <Trash2 className="mr-2 h-4 w-4" />
-                                            Terminate Group
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This action is irreversible. This will permanently delete <span className="font-bold">{selectedUser?.group?.replace('group', 'Group ')}</span> and all of its members.
-                                        </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleTerminateGroup(selectedUser?.group)}>
-                                            Continue
-                                        </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
