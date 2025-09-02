@@ -72,11 +72,21 @@ export default function ForgotPasswordPage() {
             return;
         }
 
+        if (!answers.dob || !answers.idNumber || !answers.group) {
+            toast({
+                title: "All fields required",
+                description: "Please answer all security questions to proceed.",
+                variant: "destructive"
+            });
+            setIsLoading(false);
+            return;
+        }
+
         // In a real app, this data would be hashed or encrypted and compared securely.
         // For this demo, we do a simple string comparison.
-        const isDobCorrect = !answers.dob || (user.dob && new Date(answers.dob).getTime() === new Date(user.dob).getTime());
-        const isIdCorrect = !answers.idNumber || (user.idNumber && user.idNumber.toLowerCase() === answers.idNumber.toLowerCase());
-        const isGroupCorrect = !answers.group || (user.group && user.group === answers.group);
+        const isDobCorrect = user.dob && new Date(answers.dob).getTime() === new Date(user.dob).getTime();
+        const isIdCorrect = user.idNumber && user.idNumber.toLowerCase() === answers.idNumber.toLowerCase();
+        const isGroupCorrect = user.group && user.group === answers.group;
 
         if (isDobCorrect && isIdCorrect && isGroupCorrect) {
             setStep(3);
@@ -158,8 +168,7 @@ export default function ForgotPasswordPage() {
                             <Input id="new-password" type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="confirm-password">Confirm New Password</Label>
-                            <Input id="confirm-password" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                            <Label htmlFor="confirm-password">Confirm New Password</Label>                            <Input id="confirm-password" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                         </div>
                     </CardContent>
                 );
