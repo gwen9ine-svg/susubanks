@@ -49,6 +49,12 @@ type Member = {
   address?: string;
   maritalStatus?: string;
   group?: string;
+  phone?: string;
+  dob?: string;
+  nationality?: string;
+  govIdType?: string;
+  idNumber?: string;
+  sourceOfFunds?: string;
 };
 
 type Transaction = {
@@ -59,6 +65,7 @@ type Transaction = {
   member: string;
   status: string;
   desc?: string;
+  date: string;
 };
 
 type Loan = {
@@ -67,6 +74,7 @@ type Loan = {
   status: 'Outstanding' | 'Paid' | 'Approved' | 'Pending' | string;
   memberName: string;
   email?: string;
+  date: string;
 };
 
 const parseAmount = (amount: string): number => {
@@ -89,6 +97,14 @@ const getStatusBadge = (status: string) => {
         default: return "bg-gray-100 text-gray-800";
     }
 }
+
+const DetailItem = ({ label, value }: { label: string, value?: string }) => (
+    <div className="flex flex-col">
+        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="font-medium">{value || 'N/A'}</span>
+    </div>
+);
+
 
 export default function UsersDirectoryPage() {
     const [users, setUsers] = useState<Member[]>([]);
@@ -178,6 +194,30 @@ export default function UsersDirectoryPage() {
         ? allLoans.filter(loan => loan.email === selectedUser.email)
         : [];
 
+    const userFinancials = React.useMemo(() => {
+        if (!selectedUser) {
+            return {
+                totalContributions: 0,
+                totalWithdrawals: 0,
+                totalLoans: 0
+            };
+        }
+
+        const totalContributions = allTransactions
+            .filter(tx => tx.email === selectedUser.email && (tx.type === 'Contribution' || tx.type === 'Deposit') && (tx.status === 'Completed' || tx.status === 'Approved'))
+            .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+
+        const totalWithdrawals = allTransactions
+            .filter(tx => tx.email === selectedUser.email && tx.type === 'Withdrawal' && (tx.status === 'Completed' || tx.status === 'Approved'))
+            .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
+        
+        const totalLoans = allLoans
+            .filter(loan => loan.email === selectedUser.email && (loan.status === 'Approved' || loan.status === 'Paid' || loan.status === 'Outstanding'))
+            .reduce((acc, loan) => acc + parseAmount(loan.amount), 0);
+
+        return { totalContributions, totalWithdrawals, totalLoans };
+    }, [selectedUser, allTransactions, allLoans]);
+
 
     return (
         <div className="space-y-6">
@@ -228,11 +268,30 @@ export default function UsersDirectoryPage() {
                             <CardDescription>View and manage user information.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Tabs defaultValue="transactions">
-                                <TabsList className="w-full grid grid-cols-2">
+                            <Tabs defaultValue="profile">
+                                <TabsList className="w-full grid grid-cols-3">
+                                    <TabsTrigger value="profile">Profile</TabsTrigger>
                                     <TabsTrigger value="transactions">Transactions</TabsTrigger>
                                     <TabsTrigger value="loans">Loans</TabsTrigger>
                                 </TabsList>
+                                <TabsContent value="profile" className="pt-4">
+                                     <div className="space-y-4">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                            <DetailItem label="Full Name" value={selectedUser?.name} />
+                                            <DetailItem label="Email Address" value={selectedUser?.email} />
+                                            <DetailItem label="Phone Number" value={selectedUser?.phone} />
+                                            <DetailItem label="Group" value={selectedUser?.group ? selectedUser.group.replace('group', 'Group ') : 'N/A'} />
+                                            <DetailItem label="Status" value={selectedUser?.status} />
+                                            <DetailItem label="Date of Birth" value={selectedUser?.dob} />
+                                            <DetailItem label="Nationality" value={selectedUser?.nationality} />
+                                            <DetailItem label="Residential Address" value={selectedUser?.address} />
+                                            <DetailItem label="Marital Status" value={selectedUser?.maritalStatus} />
+                                            <DetailItem label="ID Type" value={selectedUser?.govIdType} />
+                                            <DetailItem label="ID Number" value={selectedUser?.idNumber} />
+                                            <DetailItem label="Source of Funds" value={selectedUser?.sourceOfFunds} />
+                                        </div>
+                                     </div>
+                                </TabsContent>
                                 <TabsContent value="transactions" className="pt-4">
                                      <Table>
                                         <TableHeader>
@@ -248,7 +307,7 @@ export default function UsersDirectoryPage() {
                                                 <TableRow key={tx.id}>
                                                     <TableCell>{tx.type}</TableCell>
                                                     <TableCell>{tx.amount}</TableCell>
-                                                    <TableCell>{new Date().toLocaleDateString()}</TableCell>
+                                                    <TableCell>{tx.date}</TableCell>
                                                     <TableCell><Badge className={getStatusBadge(tx.status)}>{tx.status}</Badge></TableCell>
                                                 </TableRow>
                                             )) : (
@@ -272,7 +331,7 @@ export default function UsersDirectoryPage() {
                                             {userLoans.length > 0 ? userLoans.map(loan => (
                                                 <TableRow key={loan.id}>
                                                     <TableCell>{loan.amount}</TableCell>
-                                                    <TableCell>{new Date().toLocaleDateString()}</TableCell>
+                                                    <TableCell>{loan.date}</TableCell>
                                                     <TableCell><Badge className={getStatusBadge(loan.status)}>{loan.status}</Badge></TableCell>
                                                 </TableRow>
                                             )) : (
@@ -284,6 +343,26 @@ export default function UsersDirectoryPage() {
                                      </Table>
                                 </TabsContent>
                             </Tabs>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Financial Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-4 bg-muted rounded-lg">
+                                <h4 className="text-sm text-muted-foreground">Total Contributions</h4>
+                                <p className="text-xl font-bold">{formatCurrency(userFinancials.totalContributions)}</p>
+                            </div>
+                             <div className="p-4 bg-muted rounded-lg">
+                                <h4 className="text-sm text-muted-foreground">Total Withdrawals</h4>
+                                <p className="text-xl font-bold">{formatCurrency(userFinancials.totalWithdrawals)}</p>
+                            </div>
+                             <div className="p-4 bg-muted rounded-lg">
+                                <h4 className="text-sm text-muted-foreground">Total Loans</h4>
+                                <p className="text-xl font-bold">{formatCurrency(userFinancials.totalLoans)}</p>
+                            </div>
                         </CardContent>
                     </Card>
 
