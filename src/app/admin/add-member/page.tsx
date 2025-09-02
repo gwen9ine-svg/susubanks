@@ -23,6 +23,8 @@ export default function AddMemberPage() {
     const [nationality, setNationality] = useState('');
     const [group, setGroup] = useState('');
     const [sourceOfFunds, setSourceOfFunds] = useState('');
+    const [govIdType, setGovIdType] = useState('');
+    const [idCard, setIdCard] = useState('');
 
 
     const handleAddMember = async () => {
@@ -48,6 +50,8 @@ export default function AddMemberPage() {
             nationality: nationality,
             group: group,
             sourceOfFunds: sourceOfFunds,
+            govIdType: govIdType,
+            idCard: idCard,
             status: "Active", // Admins add active users directly
             contributed: "GH₵0.00",
             avatar: `https://picsum.photos/100/100?a=${Math.random()}`,
@@ -69,6 +73,8 @@ export default function AddMemberPage() {
             setNationality('');
             setGroup('');
             setSourceOfFunds('');
+            setGovIdType('');
+            setIdCard('');
 
         } catch (error) {
             console.error("Error adding member:", error);
@@ -138,6 +144,31 @@ export default function AddMemberPage() {
                                 <SelectItem value="gha">Ghana</SelectItem>
                             </SelectContent>
                             </Select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="gov-id-type">ID Card Type</Label>
+                             <Select value={govIdType} onValueChange={setGovIdType}>
+                                <SelectTrigger id="gov-id-type">
+                                    <SelectValue placeholder="Select ID type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ghana_card">Ghana Card</SelectItem>
+                                    <SelectItem value="passport">Passport</SelectItem>
+                                    <SelectItem value="drivers_license">Driver's License</SelectItem>
+                                    <SelectItem value="voters_id">Voter's ID</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="id-card">ID Card Number</Label>
+                            <Input 
+                                id="id-card" 
+                                placeholder="GHA-123456789-0" 
+                                value={idCard}
+                                onChange={(e) => setIdCard(e.target.value)}
+                            />
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
