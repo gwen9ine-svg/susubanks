@@ -109,11 +109,10 @@ export default function UsersDirectoryPage() {
       setAllTransactions(transactionData);
       setAllLoans(loanData);
       
-      const activeMembers = memberData.filter(m => m.status === 'Active');
       const pendingApprovalUsers = memberData.filter(m => m.status === 'Pending');
       setPendingUsers(pendingApprovalUsers);
 
-      const totalMembers = activeMembers.length;
+      const totalMembers = memberData.length;
       const monthlyDeposits = transactionData
         .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
         .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
