@@ -1,3 +1,4 @@
+
 // src/app/(app)/dashboard/page.tsx
 
 "use client";
@@ -41,6 +42,7 @@ type Member = {
     avatar: string;
     status: string;
     contributed: string;
+    role?: 'Admin' | 'Member' | string;
 };
 
 const parseAmount = (amount: string): number => {
@@ -125,10 +127,11 @@ export default function Dashboard() {
     setUserName(name);
 
     if (role === 'admin') {
-      const memberData = await getCollection('members');
+      const memberData = await getCollection('members') as Member[];
       const transactionData = await getCollection('transactions');
       
-      const totalMembers = memberData.length;
+      const filteredMembers = memberData.filter(member => member.role !== 'Admin');
+      const totalMembers = filteredMembers.length;
       
       const approvedWithdrawals = transactionData
           .filter((tx: any) => tx.type === 'Withdrawal' && (tx.status === 'Approved' || tx.status === 'Completed'))
@@ -144,7 +147,7 @@ export default function Dashboard() {
         approvedWithdrawals: formatCurrency(approvedWithdrawals),
         totalContributions: formatCurrency(totalContributions),
       });
-      setMembers(memberData);
+      setMembers(filteredMembers);
 
     } else if (email) {
       const allTransactions = await getCollection('transactions') as Transaction[];
