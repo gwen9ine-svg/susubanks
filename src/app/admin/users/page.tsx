@@ -36,6 +36,8 @@ import { useEffect, useState, useMemo } from "react";
 import { getCollection, deleteDocument } from "@/services/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { writeBatch } from "firebase/firestore";
 
 type Member = {
   id: string;
@@ -128,10 +130,9 @@ export default function UsersDirectoryPage() {
 
       setAllTransactions(transactionData);
       setAllLoans(loanData);
-      
-      const activeAndPendingUsers = memberData.filter(u => u.status !== 'Terminated');
-      
-      const totalMembers = activeAndPendingUsers.length;
+      setAllUsers(memberData);
+
+      const totalMembers = memberData.length;
       const monthlyDeposits = transactionData
         .filter(tx => tx.type === 'Contribution' || tx.type === 'Deposit')
         .reduce((acc, tx) => acc + parseAmount(tx.amount), 0);
@@ -147,13 +148,11 @@ export default function UsersDirectoryPage() {
         { title: "Total Loans Given", value: formatCurrency(totalLoansGiven) },
       ]);
 
-      setAllUsers(activeAndPendingUsers);
-
       if (selectedUser) {
         const updatedSelectedUser = memberData.find(u => u.id === selectedUser.id);
-        setSelectedUser(updatedSelectedUser || (activeAndPendingUsers.length > 0 ? activeAndPendingUsers[0] : null));
-      } else if(activeAndPendingUsers.length > 0) {
-        setSelectedUser(activeAndPendingUsers[0]);
+        setSelectedUser(updatedSelectedUser || (memberData.length > 0 ? memberData[0] : null));
+      } else if(memberData.length > 0) {
+        setSelectedUser(memberData[0]);
       } else {
         setSelectedUser(null);
       }
@@ -183,6 +182,40 @@ export default function UsersDirectoryPage() {
             });
         }
     };
+    
+    const handleTerminateGroup = async (groupId: string | undefined) => {
+        if (!groupId) {
+            toast({ title: 'No group selected.', variant: 'destructive'});
+            return;
+        }
+
+        try {
+            const membersToDelete = allUsers.filter(user => user.group === groupId);
+            const batch = writeBatch(db);
+
+            membersToDelete.forEach(member => {
+                const docRef = doc(db, 'members', member.id);
+                batch.delete(docRef);
+            });
+
+            await batch.commit();
+
+            toast({
+                title: 'Group Terminated',
+                description: `Group ${groupId.replace('group', ' ')} and all its members have been deleted.`,
+                variant: 'destructive'
+            });
+            fetchData();
+        } catch (error) {
+            console.error(`Error deleting group ${groupId}:`, error);
+            toast({
+                title: 'Group Deletion Failed',
+                description: 'Could not delete the group. Please try again.',
+                variant: 'destructive'
+            });
+        }
+    }
+
 
     const userTransactions = selectedUser
         ? allTransactions.filter(tx => tx.email === selectedUser.email)
@@ -377,7 +410,7 @@ export default function UsersDirectoryPage() {
                         <CardHeader>
                             <CardTitle className="text-destructive">Danger Zone</CardTitle>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="font-semibold">Terminate User Account</p>
@@ -406,6 +439,34 @@ export default function UsersDirectoryPage() {
                                     </AlertDialogContent>
                                 </AlertDialog>
                             </div>
+                             <div className="flex items-center justify-between pt-4 border-t border-destructive/20">
+                                <div>
+                                    <p className="font-semibold">Terminate Group</p>
+                                    <p className="text-sm text-muted-foreground">This will permanently delete the user's entire group.</p>
+                                </div>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" disabled={!selectedUser || !selectedUser.group}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Terminate Group
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action is irreversible. This will permanently delete <span className="font-bold">{selectedUser?.group?.replace('group', 'Group ')}</span> and all of its members.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleTerminateGroup(selectedUser?.group)}>
+                                            Continue
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -413,5 +474,3 @@ export default function UsersDirectoryPage() {
         </div>
     )
 }
-
-    

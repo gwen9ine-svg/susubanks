@@ -111,21 +111,6 @@ export default function SettingsPage() {
                         </div>
                     </CardContent>
                 </Card>
-                 <Card className="border-destructive">
-                    <CardHeader>
-                        <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                        <CardDescription>These actions are irreversible. Please be certain.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                           <div>
-                                <p className="font-medium">Delete group</p>
-                                <p className="text-sm text-muted-foreground">Permanently delete this group and all its data.</p>
-                           </div>
-                           <Button variant="destructive" size="sm">Delete</Button>
-                       </div>
-                    </CardContent>
-                 </Card>
             </div>
           </div>
         </TabsContent>
@@ -133,5 +118,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
-    
