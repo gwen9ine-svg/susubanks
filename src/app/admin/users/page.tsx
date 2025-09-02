@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getCollection, updateDocument, deleteDocument } from "@/services/firestore";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -194,7 +194,7 @@ export default function UsersDirectoryPage() {
         ? allLoans.filter(loan => loan.email === selectedUser.email)
         : [];
 
-    const userFinancials = React.useMemo(() => {
+    const userFinancials = useMemo(() => {
         if (!selectedUser) {
             return {
                 totalContributions: 0,
